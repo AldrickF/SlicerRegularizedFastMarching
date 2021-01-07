@@ -427,7 +427,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.maxThresholdSlider.valueChanged.connect(self.setMaxThresholdValue)
         parametersFormLayout.addRow("Max Threshold", self.maxThresholdSlider)
 
-
         #
         # Add vertical spacing
         # 
@@ -525,7 +524,10 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
     def onSelect(self):
         self.segmentButton.enabled = self.inputSelector.currentNode()
     
-    
+    def setMaxThresholdMaximumByVolume(self, volume):
+        voxels = slicer.util.arrayFromVolume(volume)
+        self.maxThresholdSlider.maximum = np.amax(voxels)
+
     def onLoadBrainVolumeButton(self) : 
         """
         Load the brain volume from SampleData's module
@@ -536,6 +538,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
             fileNames='RegLib_C01_1.nrrd',
             uris='http://slicer.kitware.com/midas3/download/item/292312/RegLib_C01_1.nrrd')
         volumeNode = slicer.util.getNode(pattern="FA")
+        self.setMaxThresholdMaximumByVolume(volumeNode)
     
     
     def onLoadCustomVolumeButton(self):
@@ -544,7 +547,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         """
         volumeName = self.volueNameComboBox.currentText
         loadedVolumeNode = slicer.util.loadVolume(self.volumesPath + volumeName)
-    
+        self.setMaxThresholdMaximumByVolume(loadedVolumeNode)
 
     def onClearButton(self):
         """
