@@ -523,6 +523,8 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
 
     def onSelect(self):
         self.segmentButton.enabled = self.inputSelector.currentNode()
+        if self.segmentButton.enabled:
+            self.setMaxThresholdMaximumByVolume(self.inputSelector.currentNode())
     
     def setMaxThresholdMaximumByVolume(self, volume):
         voxels = slicer.util.arrayFromVolume(volume)
