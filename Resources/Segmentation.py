@@ -73,16 +73,16 @@ def getDistanceBetweenPixel(Ip, Iq, gamma, R, p, q, imageSpacing):
     """
     Return the distance between two voxels depending on their intensities and the regularization cost
     """
-    delta = imageSpacing[2]/imageSpacing[0] if p[2] != q[2] else 1
+    # delta = imageSpacing[2]/imageSpacing[0] if p[2] != q[2] else 1
     
     R = int(R)
     
-    # if p[0] != q[0]:
-    #     delta = imageSpacing[0]
-    # elif p[1] != q[1]:
-    #     delta = imageSpacing[1]
-    # elif p[2] != q[2]:
-    #     delta = imageSpacing[2]
+    if p[0] != q[0]:
+        delta = imageSpacing[0]
+    elif p[1] != q[1]:
+        delta = imageSpacing[1]
+    elif p[2] != q[2]:
+        delta = imageSpacing[2]
         
     return math.sqrt(delta * (math.pow(Ip - Iq, 2) + gamma * math.pow(R, 2)))
 
