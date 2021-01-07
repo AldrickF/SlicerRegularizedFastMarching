@@ -613,7 +613,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
             markupsNode.AddFiducial(point_ras[0], point_ras[1], point_ras[2])
             markupsNode.SetNthFiducialLabel(i, markups[i][0])
             markupsNode.SetNthControlPointDescription(i, str(markups[i][2]))
-            markupsNode.SetNthMarkupLocked (i, True)
+            markupsNode.SetNthMarkupLocked (i, False)
 
         loadTime = time.time() - start_time
         logging.info('Markers loaded from ' + fileName + ' : ' + str(loadTime) + " seconds")
