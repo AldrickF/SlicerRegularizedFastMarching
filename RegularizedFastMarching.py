@@ -193,21 +193,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         # 
         verticalSpacer = qt.QSpacerItem(0, 20, qt.QSizePolicy.Minimum, qt.QSizePolicy.Expanding)
         parametersFormLayout.addItem(verticalSpacer)
-            
-        #
-        # Add vertical spacing
-        # 
-        verticalSpacer = qt.QSpacerItem(0, 20, qt.QSizePolicy.Minimum, qt.QSizePolicy.Expanding)
-        parametersFormLayout.addItem(verticalSpacer)
-    
-        #
-        # File name data's seeds
-        # 
-        self.fileNameDataComboBox = qt.QComboBox() 
-        self.fileNameDataComboBox = self.fillComboBox(self.fileNameDataComboBox, self.seedsCsvPath, ".csv")   
-        self.fileNameDataComboBox.currentTextChanged.connect(self.setSeedsLabelFromFile)
-        parametersFormLayout.addRow("Seeds labels csv: ", self.fileNameDataComboBox)
-       
         
         #
         # Add vertical spacing
@@ -302,10 +287,23 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         #
         # Add vertical spacing
         # 
+        verticalSpacer = qt.QSpacerItem(0, 20, qt.QSizePolicy.Minimum, qt.QSizePolicy.Expanding)
+        parametersFormLayout.addItem(verticalSpacer)
+    
+        #
+        # File name data's seeds
+        # 
+        self.fileNameDataComboBox = qt.QComboBox() 
+        self.fileNameDataComboBox = self.fillComboBox(self.fileNameDataComboBox, self.seedsCsvPath, ".csv")   
+        self.fileNameDataComboBox.currentTextChanged.connect(self.setSeedsLabelFromFile)
+        parametersFormLayout.addRow("Seeds labels csv: ", self.fileNameDataComboBox)
+
+        #
+        # Add vertical spacing
+        # 
         verticalSpacer = qt.QSpacerItem(0, 30, qt.QSizePolicy.Minimum, qt.QSizePolicy.Expanding)
         parametersFormLayout.addItem(verticalSpacer)
     
-        
         horizontalLayout = qt.QHBoxLayout()
         # Seeds label 
         self.seedsLabelText = qt.QLabel()
