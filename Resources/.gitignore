@@ -1,4 +1,5 @@
 *.seed
 !FA.seed
+!three.seed
 *.nii
 *.npy
