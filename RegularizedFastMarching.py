@@ -830,7 +830,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.ui.applyButton.connect('clicked(bool)', self.onApplyButton)
 
         # Make sure parameter node is initialized (needed for module reload)
-        self.initializeParameterNode()
+        # self.initializeParameterNode()
 
     def cleanup(self):
         """
@@ -843,114 +843,114 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         Called each time the user opens this module.
         """
         # Make sure parameter node exists and observed
-        self.initializeParameterNode()
+        # self.initializeParameterNode()
 
     def exit(self):
         """
         Called each time the user opens a different module.
         """
         # Do not react to parameter node changes (GUI wlil be updated when the user enters into the module)
-        self.removeObserver(self._parameterNode, vtk.vtkCommand.ModifiedEvent, self.updateGUIFromParameterNode)
+        # self.removeObserver(self._parameterNode, vtk.vtkCommand.ModifiedEvent, self.updateGUIFromParameterNode)
 
     def onSceneStartClose(self, caller, event):
         """
         Called just before the scene is closed.
         """
         # Parameter node will be reset, do not use it anymore
-        self.setParameterNode(None)
+        # self.setParameterNode(None)
 
     def onSceneEndClose(self, caller, event):
         """
         Called just after the scene is closed.
         """
         # If this module is shown while the scene is closed then recreate a new parameter node immediately
-        if self.parent.isEntered:
-            self.initializeParameterNode()
+        # if self.parent.isEntered:
+        #     self.initializeParameterNode()
 
-    def initializeParameterNode(self):
-        """
-        Ensure parameter node exists and observed.
-        """
-        # Parameter node stores all user choices in parameter values, node selections, etc.
-        # so that when the scene is saved and reloaded, these settings are restored.
+    # def initializeParameterNode(self):
+    #     """
+    #     Ensure parameter node exists and observed.
+    #     """
+    #     # Parameter node stores all user choices in parameter values, node selections, etc.
+    #     # so that when the scene is saved and reloaded, these settings are restored.
 
-        self.setParameterNode(self.logic.getParameterNode())
+    #     self.setParameterNode(self.logic.getParameterNode())
 
-        # Select default input nodes if nothing is selected yet to save a few clicks for the user
-        if not self._parameterNode.GetNodeReference("InputVolume"):
-            firstVolumeNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLScalarVolumeNode")
-        if firstVolumeNode:
-            self._parameterNode.SetNodeReferenceID("InputVolume", firstVolumeNode.GetID())
+    #     # Select default input nodes if nothing is selected yet to save a few clicks for the user
+    #     if not self._parameterNode.GetNodeReference("InputVolume"):
+    #         firstVolumeNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLScalarVolumeNode")
+    #     if firstVolumeNode:
+    #         self._parameterNode.SetNodeReferenceID("InputVolume", firstVolumeNode.GetID())
 
-    def setParameterNode(self, inputParameterNode):
-        """
-        Set and observe parameter node.
-        Observation is needed because when the parameter node is changed then the GUI must be updated immediately.
-        """
+    # def setParameterNode(self, inputParameterNode):
+    #     """
+    #     Set and observe parameter node.
+    #     Observation is needed because when the parameter node is changed then the GUI must be updated immediately.
+    #     """
 
-        if inputParameterNode:
-            self.logic.setDefaultParameters(inputParameterNode)
+    #     if inputParameterNode:
+    #         self.logic.setDefaultParameters(inputParameterNode)
 
-        # Unobserve previously selected parameter node and add an observer to the newly selected.
-        # Changes of parameter node are observed so that whenever parameters are changed by a script or any other module
-        # those are reflected immediately in the GUI.
-        if self._parameterNode is not None:
-            self.removeObserver(self._parameterNode, vtk.vtkCommand.ModifiedEvent, self.updateGUIFromParameterNode)
-            self._parameterNode = inputParameterNode
-        if self._parameterNode is not None:
-            self.addObserver(self._parameterNode, vtk.vtkCommand.ModifiedEvent, self.updateGUIFromParameterNode)
+    #     # Unobserve previously selected parameter node and add an observer to the newly selected.
+    #     # Changes of parameter node are observed so that whenever parameters are changed by a script or any other module
+    #     # those are reflected immediately in the GUI.
+    #     if self._parameterNode is not None:
+    #         self.removeObserver(self._parameterNode, vtk.vtkCommand.ModifiedEvent, self.updateGUIFromParameterNode)
+    #         self._parameterNode = inputParameterNode
+    #     if self._parameterNode is not None:
+    #         self.addObserver(self._parameterNode, vtk.vtkCommand.ModifiedEvent, self.updateGUIFromParameterNode)
 
-        # Initial GUI update
-        self.updateGUIFromParameterNode()
+    #     # Initial GUI update
+    #     self.updateGUIFromParameterNode()
 
-    def updateGUIFromParameterNode(self, caller=None, event=None):
-        """
-        This method is called whenever parameter node is changed.
-        The module GUI is updated to show the current state of the parameter node.
-        """
+    # def updateGUIFromParameterNode(self, caller=None, event=None):
+    #     """
+    #     This method is called whenever parameter node is changed.
+    #     The module GUI is updated to show the current state of the parameter node.
+    #     """
 
-        # if self._parameterNode is None or self._updatingGUIFromParameterNode:
-        #     return
+    #     if self._parameterNode is None or self._updatingGUIFromParameterNode:
+    #         return
 
-        # # Make sure GUI changes do not call updateParameterNodeFromGUI (it could cause infinite loop)
-        # self._updatingGUIFromParameterNode = True
+    #     # Make sure GUI changes do not call updateParameterNodeFromGUI (it could cause infinite loop)
+    #     self._updatingGUIFromParameterNode = True
 
-        # # Update node selectors and sliders
-        # self.ui.inputSelector.setCurrentNode(self._parameterNode.GetNodeReference("InputVolume"))
-        # self.ui.outputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
-        # self.ui.invertedOutputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolumeInverse"))
-        # self.ui.imageThresholdSliderWidget.value = float(self._parameterNode.GetParameter("Threshold"))
-        # self.ui.invertOutputCheckBox.checked = (self._parameterNode.GetParameter("Invert") == "true")
+    #     # Update node selectors and sliders
+    #     self.ui.inputSelector.setCurrentNode(self._parameterNode.GetNodeReference("InputVolume"))
+    #     self.ui.outputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
+    #     self.ui.invertedOutputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolumeInverse"))
+    #     self.ui.imageThresholdSliderWidget.value = float(self._parameterNode.GetParameter("Threshold"))
+    #     self.ui.invertOutputCheckBox.checked = (self._parameterNode.GetParameter("Invert") == "true")
 
-        # # Update buttons states and tooltips
-        # if self._parameterNode.GetNodeReference("InputVolume") and self._parameterNode.GetNodeReference("OutputVolume"):
-        #     self.ui.applyButton.toolTip = "Compute output volume"
-        #     self.ui.applyButton.enabled = True
-        # else:
-        #     self.ui.applyButton.toolTip = "Select input and output volume nodes"
-        #     self.ui.applyButton.enabled = False
+    #     # Update buttons states and tooltips
+    #     if self._parameterNode.GetNodeReference("InputVolume") and self._parameterNode.GetNodeReference("OutputVolume"):
+    #         self.ui.applyButton.toolTip = "Compute output volume"
+    #         self.ui.applyButton.enabled = True
+    #     else:
+    #         self.ui.applyButton.toolTip = "Select input and output volume nodes"
+    #         self.ui.applyButton.enabled = False
 
-        # # All the GUI updates are done
-        # self._updatingGUIFromParameterNode = False
+    #     # All the GUI updates are done
+    #     self._updatingGUIFromParameterNode = False
 
-    def updateParameterNodeFromGUI(self, caller=None, event=None):
-        """
-        This method is called when the user makes any change in the GUI.
-        The changes are saved into the parameter node (so that they are restored when the scene is saved and loaded).
-        """
+    # def updateParameterNodeFromGUI(self, caller=None, event=None):
+    #     """
+    #     This method is called when the user makes any change in the GUI.
+    #     The changes are saved into the parameter node (so that they are restored when the scene is saved and loaded).
+    #     """
 
-        # if self._parameterNode is None or self._updatingGUIFromParameterNode:
-        #     return
+    #     if self._parameterNode is None or self._updatingGUIFromParameterNode:
+    #         return
 
-        # wasModified = self._parameterNode.StartModify()  # Modify all properties in a single batch
+    #     wasModified = self._parameterNode.StartModify()  # Modify all properties in a single batch
 
-        # self._parameterNode.SetNodeReferenceID("InputVolume", self.ui.inputSelector.currentNodeID)
-        # self._parameterNode.SetNodeReferenceID("OutputVolume", self.ui.outputSelector.currentNodeID)
-        # self._parameterNode.SetParameter("Threshold", str(self.ui.imageThresholdSliderWidget.value))
-        # self._parameterNode.SetParameter("Invert", "true" if self.ui.invertOutputCheckBox.checked else "false")
-        # self._parameterNode.SetNodeReferenceID("OutputVolumeInverse", self.ui.invertedOutputSelector.currentNodeID)
+    #     self._parameterNode.SetNodeReferenceID("InputVolume", self.ui.inputSelector.currentNodeID)
+    #     self._parameterNode.SetNodeReferenceID("OutputVolume", self.ui.outputSelector.currentNodeID)
+    #     self._parameterNode.SetParameter("Threshold", str(self.ui.imageThresholdSliderWidget.value))
+    #     self._parameterNode.SetParameter("Invert", "true" if self.ui.invertOutputCheckBox.checked else "false")
+    #     self._parameterNode.SetNodeReferenceID("OutputVolumeInverse", self.ui.invertedOutputSelector.currentNodeID)
 
-        # self._parameterNode.EndModify(wasModified)
+    #     self._parameterNode.EndModify(wasModified)
 
     def onApplyButton(self):
         """
@@ -961,7 +961,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
                 int(self.marginMask.value), int(self.distance.value), float(self.gammaLabel.text), 
                 int(self.regularizationDiameter.value), [int(self.minThresholdSlider.value), int(self.maxThresholdSlider.value)]
             )
-
 
         except Exception as e:
             slicer.util.errorDisplay("Failed to compute results: "+str(e))
@@ -989,14 +988,14 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
         """
         ScriptedLoadableModuleLogic.__init__(self)
 
-    def setDefaultParameters(self, parameterNode):
-        """
-        Initialize parameter node with default settings.
-        """
-        if not parameterNode.GetParameter("Threshold"):
-            parameterNode.SetParameter("Threshold", "100.0")
-        if not parameterNode.GetParameter("Invert"):
-            parameterNode.SetParameter("Invert", "false")
+    # def setDefaultParameters(self, parameterNode):
+    #     """
+    #     Initialize parameter node with default settings.
+    #     """
+    #     if not parameterNode.GetParameter("Threshold"):
+    #         parameterNode.SetParameter("Threshold", "100.0")
+    #     if not parameterNode.GetParameter("Invert"):
+    #         parameterNode.SetParameter("Invert", "false")
 
     def isValidInputOutputData(self, inputVolumeNode):
         """Validates if the output is not the same as input
