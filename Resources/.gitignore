@@ -2,3 +2,4 @@
 !three.seed
 *.nii
 *.npy
+*.seg.nrrd

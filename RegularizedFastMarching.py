@@ -476,7 +476,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         # Segmentation files 
         # 
         self.segmentationFilesComboBox = qt.QComboBox() 
-        self.segmentationFilesComboBox = self.fillComboBox(self.segmentationFilesComboBox, self.segmentationsPath, ".segm.npy")
+        self.segmentationFilesComboBox = self.fillComboBox(self.segmentationFilesComboBox, self.segmentationsPath, ".seg.nrrd")
         horizontalLayout.addWidget(self.segmentationFilesComboBox)
         parametersFormLayout.addRow(horizontalLayout)
     
@@ -629,23 +629,21 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         Load the selected segmentation from combobox on the scene 
         Clone the current node and create a segmentation based on the loaded label map
         """
-        segmentationFile = self.segmentationsPath + self.segmentationFilesComboBox.currentText
-        imgLabel = np.load(segmentationFile)
-        
-        #Clone un node  
         inputVolume = self.inputSelector.currentNode()
-        volumesLogic = slicer.modules.volumes.logic()
-        clonedVolumeNode = volumesLogic.CloneVolume(slicer.mrmlScene, inputVolume, "clone")
-        voxels = slicer.util.arrayFromVolume(clonedVolumeNode)
+        segmentationFile = self.segmentationsPath + self.segmentationFilesComboBox.currentText
+        
+        loadedSegmentationVolumeNode = slicer.util.loadVolume(segmentationFile)
+        voxels = slicer.util.arrayFromVolume(loadedSegmentationVolumeNode)
+        imgLabel = np.copy(voxels)
+             
         tmpVoxels = np.copy(voxels)
-      
         tmpVoxels[:] = imgLabel[:]
       
-        slicer.util.updateVolumeFromArray(clonedVolumeNode, tmpVoxels)
+        slicer.util.updateVolumeFromArray(loadedSegmentationVolumeNode, tmpVoxels)
     
         removeLastSegmentation = self.removeLastSegmentationCheckBox.isChecked()       
         showBackGround = self.showBackGroundCheckBox.isChecked()
-        displaySegmentationMap(clonedVolumeNode, imgLabel, self.labelColorsList, removeLastSegmentation, showBackGround)
+        displaySegmentationMap(loadedSegmentationVolumeNode, imgLabel, self.labelColorsList, removeLastSegmentation, showBackGround)
         
         slicer.util.setSliceViewerLayers(background=inputVolume)
         
@@ -1081,7 +1079,8 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
     #             seeds.insert(0, seeds.pop(i))
     #     return seeds
 
-    def saveSegmentation(self, seedsFile, imgLabel, distance, gamma, marginMask, regularizationDiameter):
+    #def saveSegmentation(self, seedsFile, imgLabel, distance, gamma, marginMask, regularizationDiameter):
+    def saveSegmentation(self, inputVolume, seedsFile, distance, gamma, marginMask, regularizationDiameter):
         """
         Save this segmentation / labels image in a file named with the given parameters 
         Inputs:
@@ -1091,9 +1090,9 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
         segmentationFile += "_" + str(distance)
         segmentationFile += "_" + str(gamma).replace(".", "")
         segmentationFile += "_" + str(marginMask) 
-        segmentationFile += "_" + str(regularizationDiameter) + ".segm.npy"
-        
-        np.save(segmentationFile, imgLabel) 
+        segmentationFile += "_" + str(regularizationDiameter) + ".seg.nrrd"
+
+        slicer.util.saveNode(slicer.mrmlScene.GetFirstNodeByName(inputVolume.GetName() + "_segmentation"), segmentationFile)
         print("Segmentation saved : " + segmentationFile)
 
 
@@ -1122,19 +1121,19 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
         
         # def segmentation(globalPath, volume, voxels, seeds, marginMask, distance, regDiameter):
         imgLabel = segmentation(self.globalPath, inputVolume, tmpVoxels, seeds, len(labelColorsList), marginMask, distance, gamma, regularizationDiameter, threshold)    
-      
-        # Save this segmentation in file
-        # TODO mettre un checkbox pour sauvegarder ?
-        # TODO Passer tous les parametres dans l'objet
-        # saveSegmentation(self, volume, imgLabel, distance, gamma, maskMargin, regularizationDiameter):
-        self.saveSegmentation(self.seedsFileName, imgLabel, distance, gamma, marginMask, regularizationDiameter)
-         
+       
         tmpVoxels[:] = imgLabel[:]
         
         slicer.util.updateVolumeFromArray(clonedVolumeNode, tmpVoxels)
 
         #Copie le resultat dans le node d'arrive
         outputVolume = slicer.vtkSlicerVolumesLogic().CloneVolume(slicer.mrmlScene, clonedVolumeNode, inputVolume.GetName() + "_segmentation", True)
+
+        # Save this segmentation in file
+        # TODO mettre un checkbox pour sauvegarder ?
+        # TODO Passer tous les parametres dans l'objet
+        # saveSegmentation(self, volume, imgLabel, distance, gamma, maskMargin, regularizationDiameter):
+        self.saveSegmentation(inputVolume, self.seedsFileName, distance, gamma, marginMask, regularizationDiameter)
         
         # Affiche les segments en couleur de chaque graine
         displaySegmentationMap(clonedVolumeNode, imgLabel, labelColorsList, self.removeLastSegmentation, self.showBackGround)
