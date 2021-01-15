@@ -536,10 +536,10 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         """
         import SampleData
         SampleData.downloadFromURL(
-            nodeNames='FA',
+            nodeNames='BrainTumor',
             fileNames='RegLib_C01_1.nrrd',
             uris='http://slicer.kitware.com/midas3/download/item/292312/RegLib_C01_1.nrrd')
-        volumeNode = slicer.util.getNode(pattern="FA")
+        volumeNode = slicer.util.getNode(pattern="BrainTumor")
         self.setMaxThresholdMaximumByVolume(volumeNode)
     
     
@@ -670,7 +670,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
                 label = int(markupsNode.GetNthControlPointDescription(i))
                 self.markupsList.append([name, point_ras, label])
         
-        # Si pas de markers, charge depuis le fichier 
         if len(self.markupsList) == 0:
             fileName = self.seedsPath + self.fileNameSeedsLineEdit.text
             self.markupsList  = self.loadMarkupsFromSeedFile(fileName)
@@ -691,7 +690,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         """
         Set the selected seed as the next seed to add and toggle the fiducial placement
         """
-        #print("Markup index selected : " + str(self.lastLabelIndex))
         if self.currentSeedNameComboBox.currentIndex == self.currentSeedNameComboBox.count - 1:
             self.currentSeedNameComboBox.setCurrentIndex( self.lastLabelIndex )
         interactionNode = slicer.app.applicationLogic().GetInteractionNode()
@@ -787,15 +785,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
                 markups.append([name, point_ras, label])
         return markups
     #endregion
-
-
-
-
-
-
-
-
-
 
         # Load widget from .ui file (created by Qt Designer).
         # Additional widgets can be instantiated manually and added to self.layout.
