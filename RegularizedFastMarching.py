@@ -143,11 +143,12 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.regularizationsPath = self.globalPath + "Regularizations/"
         self.segmentationsPath = self.globalPath + "Segmentations/"
 
-        self.logic = RegularizedFastMarchingLogic() # "singleton"
-        self.logic.previousVolumeName = None
-        self.logic.imgLabel = np.array([])
-        self.logic.imgIds = np.array([])
-        self.logic.imgDist = np.array([])
+        self.logic = RegularizedFastMarchingLogic()
+        # self.logic.previousVolumeName = None
+        # self.logic.imgLabel = np.array([])
+        # self.logic.previousImgIds = np.array([])
+        # self.logic.imgIds = np.array([])
+        # self.logic.imgDist = np.array([])
 
         # Hide the Slicer Logo to increase space
         slicer.util.findChild(slicer.util.mainWindow(), 'LogoLabel').visible = False
@@ -1030,50 +1031,49 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
         """
         self.showBackGround = state
 
-    def getSeedsByState(self, previousSeeds, newSeeds):
-        """
-        # Return the seeds in newSeeds that are not in previousSeeds
-        Return the added, modified, deleted seeds in differents arrays
-        """
-        seeds = [[], [], []] # added, modified, deleted
+    # def getSeedsByState(self, previousSeeds, newSeeds):
+    #     """
+    #     # Return the seeds in newSeeds that are not in previousSeeds
+    #     Return the added, modified, deleted seeds in differents arrays
+    #     """
+    #     seeds = [[], [], []] # added, modified, deleted
 
-        # Fill dicts by id
-        previousSeedsDict = {}
-        for seed in previousSeeds:
-            previousSeedsDict[seed["id"]] = seed
+    #     # Fill dicts by id
+    #     previousSeedsDict = {}
+    #     for seed in previousSeeds:
+    #         previousSeedsDict[seed["id"]] = seed
 
-        newSeedsDict = {}
-        for seed in newSeeds:
-            newSeedsDict[seed["id"]] = seed
+    #     newSeedsDict = {}
+    #     for seed in newSeeds:
+    #         newSeedsDict[seed["id"]] = seed
 
-        # Find added and modified seeds
-        for key in newSeedsDict.keys():
-            if not key in previousSeedsDict: # added
-                seeds[0].append(newSeedsDict[key])
-            elif newSeedsDict[key] != previousSeedsDict[key] : # modified
-                seeds[1].append(newSeedsDict[key])
+    #     # Find added and modified seeds
+    #     for key in newSeedsDict.keys():
+    #         if not key in previousSeedsDict: # added
+    #             seeds[0].append(newSeedsDict[key])
+    #         elif newSeedsDict[key] != previousSeedsDict[key] : # modified
+    #             seeds[1].append(newSeedsDict[key])
         
-        # Find deleted seeds
-        for key in previousSeedsDict.keys():
-            if not key in newSeedsDict: # deleted
-                seeds[2].append(previousSeedsDict[key])
+    #     # Find deleted seeds
+    #     for key in previousSeedsDict.keys():
+    #         if not key in newSeedsDict: # deleted
+    #             seeds[2].append(previousSeedsDict[key])
 
-        return seeds 
+    #     return seeds 
 
-    def updatePreviousSegmentation(self, imgLabel, imgIds, imgDist, seeds, distance):
-        """
-            Set modified or removed points label, id and dist to 0, 0 and distance
-        """
-
-        for seed in seeds:
-            indexes = np.where(imgIds == seed.get("id"))
+    # def updatePreviousSegmentation(self, imgLabel, imgIds, imgDist, seeds, distance):
+    #     """
+    #         Set modified or removed points label, id and dist to 0, 0 and distance
+    #     """
+    #     for seed in seeds:
+    #         indexes = np.where(imgIds == seed.get("id"))
             
-            for i in range(len(indexes[0])):
-                imgLabel[indexes[0][i]] [indexes[1][i]] [indexes[2][i]] = 0
-                imgIds[indexes[0][i]] [indexes[1][i]] [indexes[2][i]] = 0
-                imgDist[indexes[0][i]] [indexes[1][i]] [indexes[2][i]] = distance
+    #         for i in range(len(indexes[0])):
+    #             imgLabel[indexes[0][i]] [indexes[1][i]] [indexes[2][i]] = 0
+    #             imgIds[indexes[0][i]] [indexes[1][i]] [indexes[2][i]] = 0
+    #             imgDist[indexes[0][i]] [indexes[1][i]] [indexes[2][i]] = distance
             
-        return imgLabel, imgIds, imgDist
+    #     return imgLabel, imgIds, imgDist
          
     def getSeedsFromMarkups(self, markupsList, nbLabel):
         """
@@ -1147,7 +1147,6 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
         return segmentationFile
 
 
-    #def saveSegmentation(self, seedsFile, imgLabel, distance, gamma, marginMask, regularizationDiameter):
     def saveSegmentation(self, inputVolume, seedsFile, distance, gamma, marginMask, regularizationDiameter):
         """
         Save this segmentation / labels image in a file named with the given parameters 
@@ -1155,11 +1154,6 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
           * imgLabel : labels image to save 
         """
         segmentationFile = self.globalPath + "Segmentations/" + self.getSegmentationFileName(seedsFile, distance, gamma, marginMask, regularizationDiameter)
-        # segmentationFile = self.globalPath + "Segmentations/" + seedsFile.replace(".", "")
-        # segmentationFile += "_" + str(distance)
-        # segmentationFile += "_" + str(gamma).replace(".", "")
-        # segmentationFile += "_" + str(marginMask) 
-        # segmentationFile += "_" + str(regularizationDiameter) + ".seg.nrrd"
 
         slicer.util.saveNode(slicer.mrmlScene.GetFirstNodeByName(inputVolume.GetName() + "_segmentation"), segmentationFile)
         print("Segmentation saved : " + segmentationFile)
@@ -1190,24 +1184,30 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
         # Si nouvelle segmentation avec meme volume
         # les prochaines graines utilisees seront les nouvelles et les modifiees
         # Retrait des graines modifiees et supprimees de imgLabel et imgDist 
-        if self.previousVolumeName == inputVolume.GetName():
-            seedsStates = self.getSeedsByState(self.previousSeeds, seeds)
-            newSeeds = seedsStates[0] + seedsStates[1]
-            self.imgLabel, self.imgIds, self.imgDist = self.updatePreviousSegmentation(self.imgLabel, self.imgIds, self.imgDist, newSeeds, distance)
+        # if self.previousVolumeName == inputVolume.GetName():
+        #     seedsStates = self.getSeedsByState(self.previousSeeds, seeds)
+        #     newSeeds = seedsStates[1] + seedsStates[2]
+        #     nextSeeds = seedsStates[0] + seedsStates[1]
+            
+        #     self.imgLabel, self.imgIds, self.imgDist = self.updatePreviousSegmentation(self.imgLabel, self.imgIds, self.imgDist, newSeeds, distance)
 
-            print("seeds states", seedsStates)
-            print("new seeds", newSeeds)
+        #     self.previousSeeds = seeds
+        #     seeds = nextSeeds
 
-        else : # reset
-            self.imgLabel = np.array([])
-            self.imgIds = np.array([])
-            self.imgDist = np.array([])
-        self.previousSeeds = seeds
-        self.previousVolumeName = inputVolume.GetName()
+        #     print("seeds states", seedsStates)
+        #     print("new seeds", newSeeds)
+
+        # else : # reset
+        #     self.imgLabel = np.array([])
+        #     self.imgIds = np.array([])
+        #     self.imgDist = np.array([])
+        #     self.previousSeeds = seeds
+        
+        # self.previousVolumeName = inputVolume.GetName()
 
         # def segmentation(globalPath, volume, voxels, seeds, marginMask, distance, regDiameter):
         self.imgLabel, self.imgIds, self.imgDist = segmentation(self.globalPath, inputVolume, tmpVoxels, seeds, 
-            len(labelColorsList), marginMask, distance, gamma, regularizationDiameter, threshold, self.imgLabel, self.imgIds, self.imgDist)    
+            len(labelColorsList), marginMask, distance, gamma, regularizationDiameter, threshold)    
        
         tmpVoxels[:] = self.imgLabel[:]
         
