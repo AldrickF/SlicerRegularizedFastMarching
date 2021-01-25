@@ -103,16 +103,15 @@ def clip(x, xMin, xMax):
     """
     return max(xMin, min(x, xMax))
 
-def segmentation(globalPath, volume, voxels, seeds, nbLabel, marginMask, distance, gamma, regDiameter, threshold):
+def segmentation(globalPath, volume, voxels, seeds, nbLabel, marginMask, distance, gamma, regDiameter, threshold, 
+    imgLabel=np.array([]), imgIds=np.array([]), imgDist=np.array([])):
     """
     Return the label s image containing the voxels linked to each seed
     """
     ###### Preparation des donnees 
     
-
     # cp = cProfile.Profile()
     # cp.enable()
-
 
     # Creation des masques en fonction des positions des graines et taille max du mask
     masks = getMasks(voxels, seeds, nbLabel, marginMask)
@@ -132,6 +131,7 @@ def segmentation(globalPath, volume, voxels, seeds, nbLabel, marginMask, distanc
     if os.path.isfile(regularizationFile):
         print("--- Alredy existing regularization")
         R = np.load(regularizationFile)
+        # seedsStates : added, modified, deletedonFile)
     else :
         # R = np.copy(voxels)
         print("- Creating new regularization start : ")
@@ -152,12 +152,19 @@ def segmentation(globalPath, volume, voxels, seeds, nbLabel, marginMask, distanc
     start_time = time.time()
     
     # Image des labels
-    imgLabel = np.ndarray(shape=voxels.shape, dtype=int)
-    imgLabel.fill(0)
-    
+    if len(imgLabel) == 0:
+        imgLabel = np.ndarray(shape=voxels.shape, dtype=int)
+        imgLabel.fill(0)
+
+    # Image des ids
+    if len(imgIds) == 0:
+        imgIds = np.ndarray(shape=voxels.shape, dtype=int)
+        imgIds.fill(0)
+
     # Image des distances
-    imgDist = np.ndarray(shape=voxels.shape, dtype=float)
-    imgDist.fill(distance)
+    if len(imgDist) == 0:
+        imgDist = np.ndarray(shape=voxels.shape, dtype=float)
+        imgDist.fill(distance)
     
     # Image des pixels parcourus
     imgPixelParcourus = np.zeros(voxels.shape, dtype=int)
@@ -173,6 +180,7 @@ def segmentation(globalPath, volume, voxels, seeds, nbLabel, marginMask, distanc
         listNextPixels.append([pos[0], pos[1], pos[2]])
         imgDist[pos[0], pos[1], pos[2]] = 0
         imgLabel[pos[0], pos[1], pos[2]] = seeds[l].get("label")
+        imgIds[pos[0], pos[1], pos[2]] = seeds[l].get("id")
         
     imageSpacing = volume.GetSpacing()
 
@@ -188,6 +196,7 @@ def segmentation(globalPath, volume, voxels, seeds, nbLabel, marginMask, distanc
         for p in listCurrentPixels:
             voxelP = voxels[p[0], p[1], p[2]]
             label_p = imgLabel[p[0], p[1], p[2]]
+            id_p = imgIds[p[0], p[1], p[2]]
             m = masks[label_p - 1]                
 
             # Calcul la distance des pixels voisins
@@ -205,6 +214,7 @@ def segmentation(globalPath, volume, voxels, seeds, nbLabel, marginMask, distanc
                 if imgDist[q[0], q[1], q[2]] > DistToSeed:    #remark : imgDist is initialized to distance everywhere, except at the seed locations
                     imgDist[q[0], q[1], q[2]] = DistToSeed
                     imgLabel[q[0], q[1], q[2]] = label_p
+                    imgIds[q[0], q[1], q[2]] = id_p
                     listNextPixels.append(q)
                     # imgPixelParcourus[q[0], q[1], q[2]] = 1
                     imgPixelParcourus[q[0], q[1], q[2]] = 1
@@ -224,4 +234,4 @@ def segmentation(globalPath, volume, voxels, seeds, nbLabel, marginMask, distanc
     print("- Regularization time : %s seconds -" % reguliarization_time)
     print("- Segmentation time :   %s seconds -" % (time.time() - start_time))
 
-    return imgLabel
+    return imgLabel, imgIds, imgDist
