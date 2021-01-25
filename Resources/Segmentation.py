@@ -69,7 +69,7 @@ def getMasks(img, seeds, nbLabel, marginMask):
     
     return masksByLabel
 
-def getDistanceBetweenPixel(Ip, Iq, gamma, R, p, q, imageSpacing):
+def getDistanceBetweenVoxel(Ip, Iq, gamma, R, p, q, imageSpacing):
     """
     Return the distance between two voxels depending on their intensities and the regularization cost
     """
@@ -87,7 +87,7 @@ def getDistanceBetweenPixel(Ip, Iq, gamma, R, p, q, imageSpacing):
     return math.sqrt(delta * (math.pow(Ip - Iq, 2) + gamma * math.pow(R, 2)))
 
 
-def isPixelInMaskArea(mask, voxel):
+def isVoxelInMaskArea(mask, voxel):
     """
     Check if this voxel is in this mask
     """
@@ -165,18 +165,18 @@ def segmentation(globalPath, volume, voxels, seeds, nbLabel, marginMask, distanc
         imgDist = np.ndarray(shape=voxels.shape, dtype=float)
         imgDist.fill(distance)
     
-    # Image des pixels parcourus
-    imgPixelParcourus = np.zeros(voxels.shape, dtype=int)
+    # Image des voxels parcourus
+    imgVoxelParcourus = np.zeros(voxels.shape, dtype=int)
     
-    # Liste des pixels courant a parcourir
-    listCurrentPixels = []
-    # Liste des prochains pixels a parcourir
-    listNextPixels = []
+    # Liste des voxels courant a parcourir
+    listCurrentVoxels = []
+    # Liste des prochains voxels a parcourir
+    listNextVoxels = []
     
     # Initialisation des images avec les graines
     for l in range(len(seeds)):
         pos = seeds[l].get("pos")
-        listNextPixels.append([pos[0], pos[1], pos[2]])
+        listNextVoxels.append([pos[0], pos[1], pos[2]])
         imgDist[pos[0], pos[1], pos[2]] = 0
         imgLabel[pos[0], pos[1], pos[2]] = seeds[l].get("label")
         # imgIds[pos[0], pos[1], pos[2]] = seeds[l].get("id")
@@ -185,38 +185,38 @@ def segmentation(globalPath, volume, voxels, seeds, nbLabel, marginMask, distanc
 
     voisins = [np.array([-1, 0, 0]), np.array([1, 0, 0]), np.array([0, -1, 0]), np.array([0, 0, -1]), np.array([0, 1, 0]), np.array([0, 0, 1])]
 
-    while listNextPixels != []:
+    while listNextVoxels != []:
 
-        listCurrentPixels = list(listNextPixels)
-        listNextPixels = []                    # Liste des prochains pixels a parcourir
+        listCurrentVoxels = list(listNextVoxels)
+        listNextVoxels = []                    # Liste des prochains voxels a parcourir
 
-        imgPixelParcourus[1:-1,1:-1,1:-1] = 0    #masque compagnon de listNextPixels
+        imgVoxelParcourus[1:-1,1:-1,1:-1] = 0    #masque compagnon de listNextVoxels
         
-        for p in listCurrentPixels:
+        for p in listCurrentVoxels:
             voxelP = voxels[p[0], p[1], p[2]]
             label_p = imgLabel[p[0], p[1], p[2]]
             # id_p = imgIds[p[0], p[1], p[2]]
             m = masks[label_p - 1]                
 
-            # Calcul la distance des pixels voisins
+            # Calcul la distance des voxels voisins
             for v in voisins:
                 q = np.add(p, v)
                 voxelQ = voxels[q[0], q[1], q[2]]
     
-                # imgPixelParcourus[q[0], q[1], q[2]] == 1
-                if not isPixelInMaskArea(m, [q[0], q[1], q[2]]) or imgPixelParcourus[q[0], q[1], q[2]] == 1 or voxelQ < threshold[0] or voxelQ > threshold[1]:
+                # imgVoxelParcourus[q[0], q[1], q[2]] == 1
+                if not isVoxelInMaskArea(m, [q[0], q[1], q[2]]) or imgVoxelParcourus[q[0], q[1], q[2]] == 1 or voxelQ < threshold[0] or voxelQ > threshold[1]:
                     continue
 
-                DistBetweenVoxels = getDistanceBetweenPixel(voxelP, voxelQ, gamma, R[q[0], q[1], q[2]], p, q, imageSpacing)
+                DistBetweenVoxels = getDistanceBetweenVoxel(voxelP, voxelQ, gamma, R[q[0], q[1], q[2]], p, q, imageSpacing)
                 DistToSeed = imgDist[p[0], p[1], p[2]]+DistBetweenVoxels
 
                 if imgDist[q[0], q[1], q[2]] > DistToSeed:    #remark : imgDist is initialized to distance everywhere, except at the seed locations
                     imgDist[q[0], q[1], q[2]] = DistToSeed
                     imgLabel[q[0], q[1], q[2]] = label_p
                     # imgIds[q[0], q[1], q[2]] = id_p
-                    listNextPixels.append(q)
-                    # imgPixelParcourus[q[0], q[1], q[2]] = 1
-                    imgPixelParcourus[q[0], q[1], q[2]] = 1
+                    listNextVoxels.append(q)
+                    # imgVoxelParcourus[q[0], q[1], q[2]] = 1
+                    imgVoxelParcourus[q[0], q[1], q[2]] = 1
 
     imgLabel = np.clip(imgLabel, 0, nbLabel)
 
