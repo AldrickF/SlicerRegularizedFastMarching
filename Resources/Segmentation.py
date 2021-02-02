@@ -3,6 +3,8 @@ import os.path
 import time
 import csv
 
+import nibabel as nib
+
 import math
 
 from Resources.Regularization import *
@@ -127,16 +129,17 @@ def segmentation(globalPath, volume, voxels, seeds, nbLabel, marginMask, distanc
     R = np.copy(voxels)
 
     # Verifie si cette regularisation a deja ete faite    
-    regularizationFile = globalPath + "Regularizations/" + volume.GetName() + "_" + str(regDiameter) + ".regu.npy"
+    # regularizationFile = globalPath + "Regularizations/" + volume.GetName() + "_" + str(regDiameter) + ".regu.npy"
+    regularizationFile = globalPath + "Regularizations/" + volume.GetName() + "_" + str(regDiameter) + ".nii.gz"
     if os.path.isfile(regularizationFile):
         print("--- Alredy existing regularization")
-        R = np.load(regularizationFile)
+        R = nib.load(regularizationFile).get_data()
     else :
-        # R = np.copy(voxels)
         print("- Creating new regularization start : ")
         R = regularization(voxels, int(regDiameter/2))
         print("- Creating new regularization end")
-        np.save(regularizationFile, R)
+        niftiR = nib.Nifti1Image(R, np.eye(4))   
+        nib.save(niftiR, regularizationFile)
     reguliarization_time = time.time() - start_time
     print("- Regularization time : %s seconds -" % reguliarization_time)
     
