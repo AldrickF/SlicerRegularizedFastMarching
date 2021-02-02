@@ -375,16 +375,24 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.gammaSlider = qt.QSlider(qt.Qt.Horizontal)
         self.gammaSlider.setRange(0, 1000)
         self.gammaSlider.setSingleStep(1)
-        self.gammaSlider.setPageStep(1)
-        self.gammaLabel = qt.QLabel(str(25), self.gammaSlider)
-        self.gammaSlider.valueChanged.connect(self.setGammaValue)
+        self.gammaSlider.setPageStep(10)
         self.gammaSlider.setValue(25)
+
+        self.gammaSpinBox = qt.QDoubleSpinBox()
+        self.gammaSpinBox.setDecimals(3)
+        self.gammaSpinBox.setRange(0, 1)
+        self.gammaSpinBox.setSingleStep(0.01)
+        self.gammaSpinBox.setValue(0.025)
+
+        self.gammaSlider.valueChanged.connect(self.setGammaValueFromSlider)
+        self.gammaSpinBox.valueChanged.connect(self.setGammaValueFromSpinBox)
         
         horizontalLayout = qt.QHBoxLayout()
-        gammaSliderLabel = qt.QLabel("Gamma (weight of the removal of the bridges) : ")
+        gammaSliderLabel = qt.QLabel("Regularization weight ")
         horizontalLayout.addWidget(gammaSliderLabel)
         horizontalLayout.addWidget(self.gammaSlider)
-        horizontalLayout.addWidget(self.gammaLabel)
+        horizontalLayout.addWidget(self.gammaSpinBox)
+
         parametersFormLayout.addRow(horizontalLayout)
         
         #
@@ -396,7 +404,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.marginMask.maximum = 20
         self.marginMask.value = 15
         self.marginMask.setToolTip("Margin used to build masks for each seed")
-        parametersFormLayout.addRow("Mask margin", self.marginMask)
+        parametersFormLayout.addRow("Mask Margin (voxel)", self.marginMask)
         
         #
         # Regularization radius
@@ -407,7 +415,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.regularizationDiameter.maximum = 20
         self.regularizationDiameter.value = 4
         self.regularizationDiameter.setToolTip("Margin used to build masks for each seed")
-        parametersFormLayout.addRow("Regularization diameter", self.regularizationDiameter)
+        parametersFormLayout.addRow("Regularization Diameter (voxels)", self.regularizationDiameter)
         
         #
         # Threshold to prevent the seeds to spread over a range intensities
@@ -419,7 +427,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.minThresholdSlider.value = 40
         self.minThresholdSlider.setToolTip("Seeds cannot spread below this value")
         self.minThresholdSlider.valueChanged.connect(self.setMinThresholdValue)
-        parametersFormLayout.addRow("Min Threshold", self.minThresholdSlider)
+        parametersFormLayout.addRow("Min Threshold (digital level)", self.minThresholdSlider)
 
         self.maxThresholdSlider = ctk.ctkSliderWidget()
         self.maxThresholdSlider.singleStep = 1
@@ -428,7 +436,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.maxThresholdSlider.value = 255
         self.maxThresholdSlider.setToolTip("Seeds cannot spread over this value")
         self.maxThresholdSlider.valueChanged.connect(self.setMaxThresholdValue)
-        parametersFormLayout.addRow("Max Threshold", self.maxThresholdSlider)
+        parametersFormLayout.addRow("Max Threshold (digital level)", self.maxThresholdSlider)
 
         #
         # Add vertical spacing
@@ -716,12 +724,19 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         interactionNode = slicer.app.applicationLogic().GetInteractionNode()
         interactionNode.SetCurrentInteractionMode(interactionNode.Place)
     
-
-    def setGammaValue(self): 
+    def setGammaValueFromSlider(self): 
         """
         Setter connect on slider, allow to have higher float precision
         """
-        self.gammaLabel.setText( str( float(self.gammaSlider.value) / 1000) )
+        self.gammaSpinBox.setValue( self.gammaSlider.value / 1000 )
+
+
+    def setGammaValueFromSpinBox(self): 
+        """
+        Setter connect on slider, allow to have higher float precision
+        """
+        self.gammaSlider.setValue( self.gammaSpinBox.value * 1000)
+
     
     def setMinThresholdValue(self):
         self.minThresholdSlider.value = min(self.minThresholdSlider.value ,self.maxThresholdSlider.value )
