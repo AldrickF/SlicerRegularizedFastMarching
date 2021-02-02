@@ -703,12 +703,12 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.logic.setSeedsFileName(self.fileNameSeedsLineEdit.text)
         self.logic.setRemoveLastSegmentation(self.removeLastSegmentationCheckBox.isChecked())
         self.logic.setShowBackGround(self.showBackGroundCheckBox.isChecked())
-        result = self.logic.run(self.inputSelector.currentNode(), self.labelColorsList, self.markupsList, int(self.marginMask.value), int(self.distance.value), float(self.gammaLabel.text), int(self.regularizationDiameter.value), [int(self.minThresholdSlider.value), int(self.maxThresholdSlider.value)])
+        result = self.logic.run(self.inputSelector.currentNode(), self.labelColorsList, self.markupsList, int(self.marginMask.value), int(self.distance.value), float(self.gammaSpinBox.value), int(self.regularizationDiameter.value), [int(self.minThresholdSlider.value), int(self.maxThresholdSlider.value)])
 
         if result : # Run succeed
             # Add new segmentation file to the segmentation's combobox
             segmentationFile = self.logic.getSegmentationFileName(self.fileNameSeedsLineEdit.text, int(self.distance.value), 
-                float(self.gammaLabel.text), int(self.marginMask.value), int(self.regularizationDiameter.value))
+                float(self.gammaSpinBox.value), int(self.marginMask.value), int(self.regularizationDiameter.value))
             
             if self.segmentationFilesComboBox.findText(segmentationFile) == -1:
                 self.segmentationFilesComboBox.addItem(segmentationFile)
