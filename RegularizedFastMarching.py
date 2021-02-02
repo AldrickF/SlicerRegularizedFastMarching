@@ -401,7 +401,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.marginMask = ctk.ctkSliderWidget()
         self.marginMask.singleStep = 1
         self.marginMask.minimum = 0
-        self.marginMask.maximum = 20
+        self.marginMask.maximum = 50
         self.marginMask.value = 15
         self.marginMask.setToolTip("Margin used to build masks for each seed")
         parametersFormLayout.addRow("Mask Margin (voxel)", self.marginMask)
