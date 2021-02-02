@@ -388,12 +388,10 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.gammaSpinBox.valueChanged.connect(self.setGammaValueFromSpinBox)
         
         horizontalLayout = qt.QHBoxLayout()
-        gammaSliderLabel = qt.QLabel("Regularization weight ")
-        horizontalLayout.addWidget(gammaSliderLabel)
         horizontalLayout.addWidget(self.gammaSlider)
         horizontalLayout.addWidget(self.gammaSpinBox)
 
-        parametersFormLayout.addRow(horizontalLayout)
+        parametersFormLayout.addRow("Regularization weight", horizontalLayout)
         
         #
         # Margin to build masks
