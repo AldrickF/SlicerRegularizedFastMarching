@@ -200,8 +200,8 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         #
         # Add vertical spacing
         # 
-        verticalSpacer = qt.QSpacerItem(0, 20, qt.QSizePolicy.Minimum, qt.QSizePolicy.Expanding)
-        parametersFormLayout.addItem(verticalSpacer)
+        # verticalSpacer = qt.QSpacerItem(0, 20, qt.QSizePolicy.Minimum, qt.QSizePolicy.Expanding)
+        # parametersFormLayout.addItem(verticalSpacer)
         
         #
         # Seeds files and a text line to load / save seeds from the scene
@@ -471,13 +471,16 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.segmentButton.toolTip = "Run the algorithm."
         self.segmentButton.enabled = False
         parametersFormLayout.addRow(self.segmentButton)
-    
+        #endregion 
+
         #
-        # Add vertical spacing
-        # 
-        verticalSpacer = qt.QSpacerItem(0, 30, qt.QSizePolicy.Minimum, qt.QSizePolicy.Expanding)
-        parametersFormLayout.addItem(verticalSpacer)
-            
+        #region Load Save segmentations
+        #
+        parametersCollapsibleButton = ctk.ctkCollapsibleButton()
+        parametersCollapsibleButton.text = "Segmentations"
+        self.layout.addWidget(parametersCollapsibleButton)
+        parametersFormLayout = qt.QFormLayout(parametersCollapsibleButton)
+
         horizontalLayout = qt.QHBoxLayout()
         self.segmentationLoadLabelText = qt.QLabel()
         self.segmentationLoadLabelText.text = "Segmentation files :"
@@ -497,8 +500,9 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.loadSegmentationButton = qt.QPushButton("Load segmentation")
         self.loadSegmentationButton.toolTip = "Load the segmenation from this file."
         parametersFormLayout.addRow(self.loadSegmentationButton)   
-        #endregion 
 
+        #end region
+        
 
         #
         #region Connections & Shortcuts
