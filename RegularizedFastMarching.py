@@ -536,10 +536,19 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.segmentButton.enabled = self.inputSelector.currentNode()
         if self.segmentButton.enabled:
             self.setMaxThresholdMaximumByVolume(self.inputSelector.currentNode())
+            self.setMinThresholdMaximumByVolume(self.inputSelector.currentNode())
     
     def setMaxThresholdMaximumByVolume(self, volume):
         voxels = slicer.util.arrayFromVolume(volume)
-        self.maxThresholdSlider.maximum = np.amax(voxels)
+        maxIntensity = np.amax(voxels)
+        self.maxThresholdSlider.maximum = maxIntensity
+        self.minThresholdSlider.maximum = maxIntensity
+
+    def setMinThresholdMaximumByVolume(self, volume):
+        voxels = slicer.util.arrayFromVolume(volume)
+        minIntensity = np.amin(voxels)
+        self.maxThresholdSlider.minimum = minIntensity
+        self.minThresholdSlider.minimum = minIntensity
 
     # def onLoadBrainVolumeButton(self) : 
     #     """
@@ -552,6 +561,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
     #         uris='http://slicer.kitware.com/midas3/download/item/292312/RegLib_C01_1.nrrd')
     #     volumeNode = slicer.util.getNode(pattern="BrainTumor")
     #     self.setMaxThresholdMaximumByVolume(volumeNode)
+    #     self.setMinThresholdMaximumByVolume(volumeNode)
     
     
     # def onLoadCustomVolumeButton(self):
@@ -561,6 +571,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
     #     volumeName = self.volueNameComboBox.currentText
     #     loadedVolumeNode = slicer.util.loadVolume(self.volumesPath + volumeName)
     #     self.setMaxThresholdMaximumByVolume(loadedVolumeNode)
+    #     self.setMinThresholdMaximumByVolume(volumeNode)
 
     def onClearButton(self):
         """
