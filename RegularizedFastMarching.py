@@ -381,7 +381,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.gammaSpinBox = qt.QDoubleSpinBox()
         self.gammaSpinBox.setDecimals(3)
         self.gammaSpinBox.setRange(0, 1)
-        self.gammaSpinBox.setSingleStep(0.01)
+        self.gammaSpinBox.setSingleStep(0.001)
         self.gammaSpinBox.setValue(0.025)
 
         self.gammaSlider.valueChanged.connect(self.setGammaValueFromSlider)
