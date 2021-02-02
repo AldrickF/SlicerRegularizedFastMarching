@@ -172,34 +172,30 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         parametersCollapsibleButton.text = "Load Data"
         self.layout.addWidget(parametersCollapsibleButton)
         parametersFormLayout = qt.QFormLayout(parametersCollapsibleButton)
+        
         #
         # File name volume .nii
         # 
-        self.volueNameComboBox = qt.QComboBox()     
-        self.volueNameComboBox = self.fillComboBox(self.volueNameComboBox, self.volumesPath, ".nii")
-        parametersFormLayout.addRow("Volumes .nii : ", self.volueNameComboBox)
+        # self.volueNameComboBox = qt.QComboBox()     
+        # self.volueNameComboBox = self.fillComboBox(self.volueNameComboBox, self.volumesPath, ".nii")
+        # parametersFormLayout.addRow("Volumes .nii : ", self.volueNameComboBox)
     
         #
         # Load volume buttons
         #
-        horizontalLayout = qt.QHBoxLayout()
-        self.loadBrainVolumeButton = qt.QPushButton("Load Example Volume")
-        self.loadBrainVolumeButton.enabled = True
-        horizontalLayout.addWidget(self.loadBrainVolumeButton)
+        # horizontalLayout = qt.QHBoxLayout()
+        # self.loadBrainVolumeButton = qt.QPushButton("Load Example Volume")
+        # self.loadBrainVolumeButton.enabled = True
+        # horizontalLayout.addWidget(self.loadBrainVolumeButton)
         
         #
         # Load custom volumes buttons
         #
-        self.loadCustomVolumeButton = qt.QPushButton("Load Selected Volume")
-        self.loadCustomVolumeButton.enabled = True
-        horizontalLayout.addWidget(self.loadCustomVolumeButton)       
-        parametersFormLayout.addRow(horizontalLayout)
+        # self.loadCustomVolumeButton = qt.QPushButton("Load Selected Volume")
+        # self.loadCustomVolumeButton.enabled = True
+        # horizontalLayout.addWidget(self.loadCustomVolumeButton)       
+        # parametersFormLayout.addRow(horizontalLayout)
     
-        #
-        # Add vertical spacing
-        # 
-        verticalSpacer = qt.QSpacerItem(0, 20, qt.QSizePolicy.Minimum, qt.QSizePolicy.Expanding)
-        parametersFormLayout.addItem(verticalSpacer)
         
         #
         # Add vertical spacing
@@ -499,8 +495,8 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         #
         #region Connections & Shortcuts
         #
-        self.loadBrainVolumeButton.connect('clicked(bool)', self.onLoadBrainVolumeButton)
-        self.loadCustomVolumeButton.connect('clicked(bool)', self.onLoadCustomVolumeButton)
+        # self.loadBrainVolumeButton.connect('clicked(bool)', self.onLoadBrainVolumeButton)
+        # self.loadCustomVolumeButton.connect('clicked(bool)', self.onLoadCustomVolumeButton)
         
         self.clearButton.connect('clicked(bool)', self.onClearButton)
         self.clearOrganButton.connect('clicked(bool)', self.onClearOrganButton)
@@ -537,26 +533,26 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         voxels = slicer.util.arrayFromVolume(volume)
         self.maxThresholdSlider.maximum = np.amax(voxels)
 
-    def onLoadBrainVolumeButton(self) : 
-        """
-        Load the brain volume from SampleData's module
-        """
-        import SampleData
-        SampleData.downloadFromURL(
-            nodeNames='BrainTumor',
-            fileNames='RegLib_C01_1.nrrd',
-            uris='http://slicer.kitware.com/midas3/download/item/292312/RegLib_C01_1.nrrd')
-        volumeNode = slicer.util.getNode(pattern="BrainTumor")
-        self.setMaxThresholdMaximumByVolume(volumeNode)
+    # def onLoadBrainVolumeButton(self) : 
+    #     """
+    #     Load the brain volume from SampleData's module
+    #     """
+    #     import SampleData
+    #     SampleData.downloadFromURL(
+    #         nodeNames='BrainTumor',
+    #         fileNames='RegLib_C01_1.nrrd',
+    #         uris='http://slicer.kitware.com/midas3/download/item/292312/RegLib_C01_1.nrrd')
+    #     volumeNode = slicer.util.getNode(pattern="BrainTumor")
+    #     self.setMaxThresholdMaximumByVolume(volumeNode)
     
     
-    def onLoadCustomVolumeButton(self):
-        """
-        Load a volume by the current text in combobox
-        """
-        volumeName = self.volueNameComboBox.currentText
-        loadedVolumeNode = slicer.util.loadVolume(self.volumesPath + volumeName)
-        self.setMaxThresholdMaximumByVolume(loadedVolumeNode)
+    # def onLoadCustomVolumeButton(self):
+    #     """
+    #     Load a volume by the current text in combobox
+    #     """
+    #     volumeName = self.volueNameComboBox.currentText
+    #     loadedVolumeNode = slicer.util.loadVolume(self.volumesPath + volumeName)
+    #     self.setMaxThresholdMaximumByVolume(loadedVolumeNode)
 
     def onClearButton(self):
         """
