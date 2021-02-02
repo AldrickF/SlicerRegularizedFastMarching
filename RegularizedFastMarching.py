@@ -169,7 +169,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         #region Load Data Area
         #
         parametersCollapsibleButton = ctk.ctkCollapsibleButton()
-        parametersCollapsibleButton.text = "Load Data"
+        parametersCollapsibleButton.text = "Seeds"
         self.layout.addWidget(parametersCollapsibleButton)
         parametersFormLayout = qt.QFormLayout(parametersCollapsibleButton)
         
