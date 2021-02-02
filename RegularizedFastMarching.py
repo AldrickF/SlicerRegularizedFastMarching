@@ -41,10 +41,17 @@ class RegularizedFastMarching(ScriptedLoadableModule):
         # Additional initialization step after application startup is complete
         slicer.app.connect("startupCompleted()", registerSampleData)
 
+def getSegmentationFileName(seedsFile, distance, gamma, marginMask, regularizationDiameter):
+    segmentationFile = seedsFile.replace(".", "")
+    segmentationFile += "_" + str(distance)
+    segmentationFile += "_" + str(gamma).replace(".", "")
+    segmentationFile += "_" + str(marginMask) 
+    segmentationFile += "_" + str(regularizationDiameter) + ".seg.nrrd"
+    return segmentationFile
+
 #
 # Register sample data sets in Sample Data module
 #
-
 def registerSampleData():
   """
   Add data sets to Sample Data module.
@@ -479,6 +486,19 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.layout.addWidget(parametersCollapsibleButton)
         parametersFormLayout = qt.QFormLayout(parametersCollapsibleButton)
 
+        #
+        # Load segmentationButton Button
+        #
+        self.saveSegmentationButton = qt.QPushButton("Save segmentation")
+        self.saveSegmentationButton.toolTip = "Save this segmentation with used parameters."
+        parametersFormLayout.addRow(self.saveSegmentationButton)   
+
+        #
+        # Add vertical spacing
+        # 
+        verticalSpacer = qt.QSpacerItem(0, 30, qt.QSizePolicy.Minimum, qt.QSizePolicy.Expanding)
+        parametersFormLayout.addItem(verticalSpacer)
+
         horizontalLayout = qt.QHBoxLayout()
         self.segmentationLoadLabelText = qt.QLabel()
         self.segmentationLoadLabelText.text = "Segmentation files :"
@@ -498,7 +518,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.loadSegmentationButton = qt.QPushButton("Load segmentation")
         self.loadSegmentationButton.toolTip = "Load the segmenation from this file."
         parametersFormLayout.addRow(self.loadSegmentationButton)   
-
         #end region
         
 
@@ -511,6 +530,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.clearButton.connect('clicked(bool)', self.onClearButton)
         self.clearOrganButton.connect('clicked(bool)', self.onClearOrganButton)
         self.segmentButton.connect('clicked(bool)', self.onSegmentButton)
+        self.saveSegmentationButton.connect('clicked(bool)', self.onSaveSegmentationButton)
         self.loadSegmentationButton.connect('clicked(bool)', self.onLoadSegmentationButton)
         self.saveMarkersButton.connect('clicked(bool)', self.onSaveMarkersButton)
         self.loadMarkersButton.connect('clicked(bool)', self.onLoadMarkersButton)
@@ -648,6 +668,13 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         logging.info('Markers loaded from ' + fileName + ' : ' + str(loadTime) + " seconds")
     
 
+    def onSaveSegmentationButton(self):
+        inputVolume = self.inputSelector.currentNode()
+        seedsFileName = self.fileNameSeedsLineEdit.text
+        # saveSegmentation(self, volume, imgLabel, distance, gamma, maskMargin, regularizationDiameter):
+        self.saveSegmentation(inputVolume, seedsFileName, int(self.distance.value), float(self.gammaSpinBox.value), int(self.marginMask.value), int(self.regularizationDiameter.value))
+        
+
     def onLoadSegmentationButton(self):
         """
         Load the selected segmentation from combobox on the scene 
@@ -709,7 +736,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
 
         if result : # Run succeed
             # Add new segmentation file to the segmentation's combobox
-            segmentationFile = self.logic.getSegmentationFileName(self.fileNameSeedsLineEdit.text, int(self.distance.value), 
+            segmentationFile = getSegmentationFileName(self.fileNameSeedsLineEdit.text, int(self.distance.value), 
                 float(self.gammaSpinBox.value), int(self.marginMask.value), int(self.regularizationDiameter.value))
             
             if self.segmentationFilesComboBox.findText(segmentationFile) == -1:
@@ -821,8 +848,19 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
                 label= int(tokens[4])
                 markups.append([name, point_ras, label])
         return markups
-    #endregion
 
+
+    def saveSegmentation(self, inputVolume, seedsFile, distance, gamma, marginMask, regularizationDiameter):
+        """
+        Save this segmentation / labels image in a file named with the given parameters 
+        Inputs:
+          * imgLabel : labels image to save 
+        """
+        segmentationFile = self.globalPath + "Segmentations/" + getSegmentationFileName(seedsFile, distance, gamma, marginMask, regularizationDiameter)
+
+        slicer.util.saveNode(slicer.mrmlScene.GetFirstNodeByName(inputVolume.GetName() + "_segmentation"), segmentationFile)
+        print("Segmentation saved : " + segmentationFile)
+    #endregion
 
     def cleanup(self):
         """
@@ -990,25 +1028,6 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
     #             seeds.insert(0, seeds.pop(i))
     #     return seeds
 
-    def getSegmentationFileName(self, seedsFile, distance, gamma, marginMask, regularizationDiameter):
-        segmentationFile = seedsFile.replace(".", "")
-        segmentationFile += "_" + str(distance)
-        segmentationFile += "_" + str(gamma).replace(".", "")
-        segmentationFile += "_" + str(marginMask) 
-        segmentationFile += "_" + str(regularizationDiameter) + ".seg.nrrd"
-        return segmentationFile
-
-
-    def saveSegmentation(self, inputVolume, seedsFile, distance, gamma, marginMask, regularizationDiameter):
-        """
-        Save this segmentation / labels image in a file named with the given parameters 
-        Inputs:
-          * imgLabel : labels image to save 
-        """
-        segmentationFile = self.globalPath + "Segmentations/" + self.getSegmentationFileName(seedsFile, distance, gamma, marginMask, regularizationDiameter)
-
-        slicer.util.saveNode(slicer.mrmlScene.GetFirstNodeByName(inputVolume.GetName() + "_segmentation"), segmentationFile)
-        print("Segmentation saved : " + segmentationFile)
 
     def run(self, inputVolume, labelColorsList, markupsList, marginMask, distance, gamma, regularizationDiameter, threshold):
         """
@@ -1072,7 +1091,7 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
         # TODO mettre un checkbox pour sauvegarder ?
         # TODO Passer tous les parametres dans l'objet
         # saveSegmentation(self, volume, imgLabel, distance, gamma, maskMargin, regularizationDiameter):
-        self.saveSegmentation(inputVolume, self.seedsFileName, distance, gamma, marginMask, regularizationDiameter)
+        # self.saveSegmentation(inputVolume, self.seedsFileName, distance, gamma, marginMask, regularizationDiameter)
         
         # Affiche les segments en couleur de chaque graine
         displaySegmentationMap(clonedVolumeNode, self.imgLabel, labelColorsList, self.removeLastSegmentation, self.showBackGround)
