@@ -890,8 +890,11 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
           * imgLabel : labels image to save 
         """
         segmentationFileName = self.globalPath + "Segmentations/" + segmentationFileName
+        segmentationNode = slicer.mrmlScene.GetFirstNodeByClass('vtkMRMLSegmentationNode')
+        labelmapVolumeNode = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLLabelMapVolumeNode')
+        slicer.modules.segmentations.logic().ExportVisibleSegmentsToLabelmapNode(segmentationNode, labelmapVolumeNode, inputVolume)
 
-        slicer.util.saveNode(slicer.mrmlScene.GetFirstNodeByName(inputVolume.GetName() + "_segmentation"), segmentationFileName)
+        slicer.util.saveNode(labelmapVolumeNode, segmentationFileName)
         print("Segmentation saved : " + segmentationFileName)
     #endregion
 
