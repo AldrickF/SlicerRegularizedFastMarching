@@ -377,6 +377,17 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         parametersFormLayout.addRow("Distance", self.distance)
         
         #
+        # Margin to build masks
+        #
+        self.marginMask = ctk.ctkSliderWidget()
+        self.marginMask.singleStep = 1
+        self.marginMask.minimum = 0
+        self.marginMask.maximum = 50
+        self.marginMask.value = 15
+        self.marginMask.setToolTip("Margin used to build masks for each seed")
+        parametersFormLayout.addRow("Mask Margin (voxel)", self.marginMask)
+
+        #
         # Gamma to prevent the seeds to cross bridges between organs
         #
         self.gammaSlider = qt.QSlider(qt.Qt.Horizontal)
@@ -399,17 +410,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         horizontalLayout.addWidget(self.gammaSpinBox)
 
         parametersFormLayout.addRow("Regularization weight", horizontalLayout)
-        
-        #
-        # Margin to build masks
-        #
-        self.marginMask = ctk.ctkSliderWidget()
-        self.marginMask.singleStep = 1
-        self.marginMask.minimum = 0
-        self.marginMask.maximum = 50
-        self.marginMask.value = 15
-        self.marginMask.setToolTip("Margin used to build masks for each seed")
-        parametersFormLayout.addRow("Mask Margin (voxel)", self.marginMask)
         
         #
         # Regularization radius
