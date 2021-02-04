@@ -487,7 +487,14 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         parametersFormLayout = qt.QFormLayout(parametersCollapsibleButton)
 
         #
-        # Load segmentationButton Button
+        # Name of the segmentation to save
+        #
+        self.saveSegmentationName = qt.QLineEdit()
+        self.saveSegmentationName.textChanged.connect(self.onSaveSegmentationFileChange)
+        parametersFormLayout.addRow("Segmentation name :", self.saveSegmentationName) 
+
+        #
+        # Save segmentationButton Button
         #
         self.saveSegmentationButton = qt.QPushButton("Save segmentation")
         self.saveSegmentationButton.toolTip = "Save this segmentation with used parameters."
@@ -548,6 +555,9 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
 
         # Refresh Apply button state
         self.onSelect()
+        
+        # Refresh segmentation save button state
+        self.onSaveSegmentationFileChange()
 
     #region On event functions
     def cleanup(self):
@@ -668,12 +678,29 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         logging.info('Markers loaded from ' + fileName + ' : ' + str(loadTime) + " seconds")
     
 
+    def onSaveSegmentationFileChange(self):
+        self.saveSegmentationButton.enabled = self.saveSegmentationName.text != ""
+            
+
     def onSaveSegmentationButton(self):
         inputVolume = self.inputSelector.currentNode()
         seedsFileName = self.fileNameSeedsLineEdit.text
-        # saveSegmentation(self, volume, imgLabel, distance, gamma, maskMargin, regularizationDiameter):
-        self.saveSegmentation(inputVolume, seedsFileName, int(self.distance.value), float(self.gammaSpinBox.value), int(self.marginMask.value), int(self.regularizationDiameter.value))
+        segmentationFileName = self.saveSegmentationName.text
         
+        if not inputVolume:
+            logging.debug('no input volume node defined')
+            return
+        
+        if segmentationFileName == "":
+            logging.debug('no segmentation name defined')
+            return
+        
+        self.saveSegmentation(inputVolume, segmentationFileName)
+
+        # Add new segmentation file to the segmentation's combobox
+        if self.segmentationFilesComboBox.findText(segmentationFileName) == -1:
+            self.segmentationFilesComboBox.addItem(segmentationFileName)
+
 
     def onLoadSegmentationButton(self):
         """
@@ -707,7 +734,15 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         If no markups fiducial are on the scene, try to load them from the current seeds path 
         """
         markupsNode = slicer.mrmlScene.GetFirstNodeByName("MarkupsFiducial")
-      
+
+        seedsFileName = self.fileNameSeedsLineEdit.text
+        marginMask = int(self.marginMask.value)
+        distance = int(self.distance.value)
+        gamma = float(self.gammaSpinBox.value)
+        regularizationDiameter = int(self.regularizationDiameter.value)
+        minThreshold = int(self.minThresholdSlider.value)
+        maxThreshold = int(self.maxThresholdSlider.value)
+        
         # Tous les points convertis dans le repere RAS
         self.markupsList = []
         
@@ -729,19 +764,16 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         
         # logic = RegularizedFastMarchingLogic()
         self.logic.setGlobalPath(self.globalPath)
-        self.logic.setSeedsFileName(self.fileNameSeedsLineEdit.text)
+        self.logic.setSeedsFileName(seedsFileName)
         self.logic.setRemoveLastSegmentation(self.removeLastSegmentationCheckBox.isChecked())
         self.logic.setShowBackGround(self.showBackGroundCheckBox.isChecked())
-        result = self.logic.run(self.inputSelector.currentNode(), self.labelColorsList, self.markupsList, int(self.marginMask.value), int(self.distance.value), float(self.gammaSpinBox.value), int(self.regularizationDiameter.value), [int(self.minThresholdSlider.value), int(self.maxThresholdSlider.value)])
+        result = self.logic.run(self.inputSelector.currentNode(), self.labelColorsList, self.markupsList,
+            marginMask, distance, gamma, regularizationDiameter, [minThreshold, maxThreshold])
 
         if result : # Run succeed
-            # Add new segmentation file to the segmentation's combobox
-            segmentationFile = getSegmentationFileName(self.fileNameSeedsLineEdit.text, int(self.distance.value), 
-                float(self.gammaSpinBox.value), int(self.marginMask.value), int(self.regularizationDiameter.value))
-            
-            if self.segmentationFilesComboBox.findText(segmentationFile) == -1:
-                self.segmentationFilesComboBox.addItem(segmentationFile)
-
+            # Set the segmentation file UI name with this seeds file name and the used paramaters
+            segmentationFileName = getSegmentationFileName(seedsFileName, distance, gamma, marginMask, regularizationDiameter)
+            self.saveSegmentationName.text = segmentationFileName 
             
     def addMarkupcallback(self):
         """
@@ -850,16 +882,17 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         return markups
 
 
-    def saveSegmentation(self, inputVolume, seedsFile, distance, gamma, marginMask, regularizationDiameter):
+    #def saveSegmentation(self, inputVolume, seedsFile, distance, gamma, marginMask, regularizationDiameter):
+    def saveSegmentation(self, inputVolume, segmentationFileName):
         """
         Save this segmentation / labels image in a file named with the given parameters 
         Inputs:
           * imgLabel : labels image to save 
         """
-        segmentationFile = self.globalPath + "Segmentations/" + getSegmentationFileName(seedsFile, distance, gamma, marginMask, regularizationDiameter)
+        segmentationFileName = self.globalPath + "Segmentations/" + segmentationFileName
 
-        slicer.util.saveNode(slicer.mrmlScene.GetFirstNodeByName(inputVolume.GetName() + "_segmentation"), segmentationFile)
-        print("Segmentation saved : " + segmentationFile)
+        slicer.util.saveNode(slicer.mrmlScene.GetFirstNodeByName(inputVolume.GetName() + "_segmentation"), segmentationFileName)
+        print("Segmentation saved : " + segmentationFileName)
     #endregion
 
     def cleanup(self):
