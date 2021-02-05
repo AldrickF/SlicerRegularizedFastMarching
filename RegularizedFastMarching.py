@@ -6,6 +6,7 @@ from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 
 from Resources.Segmentation import *
+from Resources.Regularization import *
 
 import numpy as np
 import os.path
@@ -1081,7 +1082,6 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
       
         # Ajoute une zone coloree autour de chaque marqueurs
         voxels = slicer.util.arrayFromVolume(clonedVolumeNode)
-      
         tmpVoxels = np.copy(voxels)
         
         seeds = self.getSeedsFromMarkups(markupsList, len(labelColorsList))
@@ -1112,8 +1112,35 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
         
         # self.previousVolumeName = inputVolume.GetName()
 
+        # Map de regularisation - dilatation de l'image
+        start_time = time.time()
+        R = np.copy(tmpVoxels)
+
+        # Check if regularization exists 
+        regularizationFile = self.globalPath + "Regularizations/" + inputVolume.GetName() + "_" + str(regularizationDiameter) + ".nii.gz"
+        # If not, create a new one,
+        if os.path.isfile(regularizationFile):
+            print("--- Alredy existing regularization")
+            regularizationVolumeNode = slicer.util.loadVolume(regularizationFile)
+            voxels = slicer.util.arrayFromVolume(regularizationVolumeNode)
+            R = np.copy(voxels)
+            slicer.mrmlScene.RemoveNode(regularizationVolumeNode)
+        # Else, load this one
+        else :
+            print("- Creating new regularization start : ")
+            R = regularization(voxels, int(regularizationDiameter/2))
+            print("- Creating new regularization end")
+
+            regularizationVolumeNode = volumesLogic.CloneVolume(slicer.mrmlScene, inputVolume, inputVolume.GetName() + "_regularization_" + str(regularizationDiameter))
+            slicer.util.updateVolumeFromArray(regularizationVolumeNode, R)
+            slicer.util.saveNode(regularizationVolumeNode, regularizationFile)
+
+        regularization_time = time.time() - start_time
+        print("- Regularization time : %s seconds -" % regularization_time)
+
+
         # def segmentation(globalPath, volume, voxels, seeds, marginMask, distance, regDiameter):
-        self.imgLabel, self.imgIds, self.imgDist = segmentation(self.globalPath, inputVolume, tmpVoxels, seeds, 
+        self.imgLabel, self.imgIds, self.imgDist = segmentation(inputVolume, tmpVoxels, R, seeds, 
             len(labelColorsList), marginMask, distance, gamma, regularizationDiameter, threshold)    
        
         tmpVoxels[:] = self.imgLabel[:]
@@ -1122,12 +1149,6 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
 
         #Copie le resultat dans le node d'arrive
         outputVolume = slicer.vtkSlicerVolumesLogic().CloneVolume(slicer.mrmlScene, clonedVolumeNode, inputVolume.GetName() + "_segmentation", True)
-
-        # Save this segmentation in file
-        # TODO mettre un checkbox pour sauvegarder ?
-        # TODO Passer tous les parametres dans l'objet
-        # saveSegmentation(self, volume, imgLabel, distance, gamma, maskMargin, regularizationDiameter):
-        # self.saveSegmentation(inputVolume, self.seedsFileName, distance, gamma, marginMask, regularizationDiameter)
         
         # Affiche les segments en couleur de chaque graine
         displaySegmentationMap(clonedVolumeNode, self.imgLabel, labelColorsList, self.removeLastSegmentation, self.showBackGround)

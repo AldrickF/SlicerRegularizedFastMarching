@@ -2,12 +2,7 @@ import numpy as np
 import os.path
 import time
 import csv
-
-import nibabel as nib
-
 import math
-
-from Resources.Regularization import *
 
 # import cProfile, pstats, io
 
@@ -105,7 +100,7 @@ def clip(x, xMin, xMax):
     """
     return max(xMin, min(x, xMax))
 
-def segmentation(globalPath, volume, voxels, seeds, nbLabel, marginMask, distance, gamma, regDiameter, threshold, 
+def segmentation(volume, voxels, R, seeds, nbLabel, marginMask, distance, gamma, regDiameter, threshold, 
     imgLabel=np.array([]), imgIds=np.array([]), imgDist=np.array([])):
     """
     Return the label s image containing the voxels linked to each seed
@@ -123,25 +118,6 @@ def segmentation(globalPath, volume, voxels, seeds, nbLabel, marginMask, distanc
 
     # for m in masks:
     #     imgMasks[m[0][0]:m[1][0], m[0][1]:m[1][1], m[0][2]:m[1][2]] = 1
-    
-    # Map de regularisation - dilatation de l'image
-    start_time = time.time()
-    R = np.copy(voxels)
-
-    # Verifie si cette regularisation a deja ete faite    
-    # regularizationFile = globalPath + "Regularizations/" + volume.GetName() + "_" + str(regDiameter) + ".regu.npy"
-    regularizationFile = globalPath + "Regularizations/" + volume.GetName() + "_" + str(regDiameter) + ".nii.gz"
-    if os.path.isfile(regularizationFile):
-        print("--- Alredy existing regularization")
-        R = nib.load(regularizationFile).get_data()
-    else :
-        print("- Creating new regularization start : ")
-        R = regularization(voxels, int(regDiameter/2))
-        print("- Creating new regularization end")
-        niftiR = nib.Nifti1Image(R, np.eye(4))   
-        nib.save(niftiR, regularizationFile)
-    reguliarization_time = time.time() - start_time
-    print("- Regularization time : %s seconds -" % reguliarization_time)
     
     ###### Affichage de l'initialisation
     print("Nombre de seeds : " + str(len(seeds)))
@@ -233,7 +209,7 @@ def segmentation(globalPath, volume, voxels, seeds, nbLabel, marginMask, distanc
     #print(s.getvalue())
 
     ###### Affichage des resultats
-    print("- Regularization time : %s seconds -" % reguliarization_time)
+    # print("- Regularization time : %s seconds -" % reguliarization_time)
     print("- Segmentation time :   %s seconds -" % (time.time() - start_time))
 
     return imgLabel, imgIds, imgDist
