@@ -1,6 +1,6 @@
 *.seed
 !three.seed
 *.nii
-*.nii_gz
+*.nii.gz
 *.npy
 *.seg.nrrd
