@@ -488,6 +488,29 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         parametersFormLayout = qt.QFormLayout(parametersCollapsibleButton)
 
         #
+        # Checkbox to save the segmentation using the labels   
+        #
+        self.saveByLabelsCheckBox = qt.QCheckBox("")
+        self.saveByLabelsCheckBox.setChecked(True)
+        parametersFormLayout.addRow("Save by labels", self.saveByLabelsCheckBox)
+
+        #
+        # Checkbox to save the segmentation using the voxels intensities   
+        #
+        self.saveByIntensitiesCheckBox = qt.QCheckBox("")
+        self.saveByIntensitiesCheckBox.setChecked(False)
+        parametersFormLayout.addRow("Save by intensities", self.saveByIntensitiesCheckBox)
+
+        #
+        # Checkbox to generate segments data   
+        #
+        self.generateDataCsvCheckBox = qt.QCheckBox("")
+        self.generateDataCsvCheckBox.enabled = False
+        self.generateDataCsvCheckBox.setChecked(False)
+        parametersFormLayout.addRow("Generate segments data CSV", self.generateDataCsvCheckBox)
+
+
+        #
         # Name of the segmentation to save
         #
         self.saveSegmentationName = qt.QLineEdit()
@@ -538,6 +561,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.clearButton.connect('clicked(bool)', self.onClearButton)
         self.clearOrganButton.connect('clicked(bool)', self.onClearOrganButton)
         self.segmentButton.connect('clicked(bool)', self.onSegmentButton)
+        self.saveByIntensitiesCheckBox.connect('stateChanged(int)', self.onSaveByIntensitiesCheckBox)
         self.saveSegmentationButton.connect('clicked(bool)', self.onSaveSegmentationButton)
         self.loadSegmentationButton.connect('clicked(bool)', self.onLoadSegmentationButton)
         self.saveMarkersButton.connect('clicked(bool)', self.onSaveMarkersButton)
@@ -683,6 +707,10 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.saveSegmentationButton.enabled = self.saveSegmentationName.text != ""
             
 
+    def onSaveByIntensitiesCheckBox(self):
+        self.generateDataCsvCheckBox.enabled = self.saveByIntensitiesCheckBox.isChecked()
+        
+
     def onSaveSegmentationButton(self):
         inputVolume = self.inputSelector.currentNode()
         seedsFileName = self.fileNameSeedsLineEdit.text
@@ -696,7 +724,55 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
             logging.debug('no segmentation name defined')
             return
         
-        self.saveSegmentation(inputVolume, segmentationFileName)
+        if not self.saveByLabelsCheckBox.isChecked() and not self.saveByIntensitiesCheckBox.isChecked():
+            logging.debug('At least one segmentation save mode must be checked')
+            return
+
+        if self.saveByLabelsCheckBox.isChecked():
+            self.saveSegmentation(inputVolume, segmentationFileName)
+        
+        if self.saveByIntensitiesCheckBox.isChecked():
+            # Create volume keeping only intensities where labels are not equal to 0 or are background
+            backgroundLabel = len(self.seedsData)
+            inputVoxels = slicer.util.arrayFromVolume(inputVolume)
+            outputVoxels = slicer.util.arrayFromVolume(self.outputVolume)
+            
+            voxelsToSave = np.copy(inputVoxels)
+            voxelsShape = voxelsToSave.shape
+            voxelsToSave = np.array( [0 if y == 0 or y == backgroundLabel else x for x, y in zip(inputVoxels.ravel(), outputVoxels.ravel())], dtype=np.int16 )
+            voxelsToSave = voxelsToSave.reshape( voxelsShape )
+
+            volumesLogic = slicer.modules.volumes.logic()
+            toSaveNode = volumesLogic.CloneVolume(slicer.mrmlScene, inputVolume, self.outputVolume.GetName() + "_intensities")
+            slicer.util.updateVolumeFromArray(toSaveNode, voxelsToSave)
+            slicer.util.saveNode(toSaveNode, self.globalPath + "Segmentations/" + segmentationFileName)
+            self.outputVolumeWithIntensities = toSaveNode
+
+            if self.generateDataCsvCheckBox.isChecked():
+
+                csvFile =   os.path.splitext(self.globalPath + "Segmentations/" + segmentationFileName)[0] + ".csv"
+                with open(csvFile, 'w') as csvfile:
+                    writer = csv.writer(csvfile, delimiter=',',
+                        quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                    writer.writerow(["Label", "voxels count", "min", "max", "mean", "std"])
+                    
+                    # For each label
+                    for seedData in self.seedsData:
+                        label = int(seedData[0])
+
+                        if label == len(self.seedsData):
+                            continue
+                        
+                        voxelsByLabel = np.array( [ x for x, y in zip(inputVoxels.ravel(), outputVoxels.ravel()) if y == label ] )
+                    
+                        voxelsCount = len(voxelsByLabel)
+                        minIntensity = 0 if voxelsCount == 0 else np.amin(voxelsByLabel)
+                        maxIntensity = 0 if voxelsCount == 0 else np.amax(voxelsByLabel)
+                        meanIntensity = 0 if voxelsCount == 0 else np.mean(voxelsByLabel)
+                        stdIntensity = 0 if voxelsCount == 0 else np.std(voxelsByLabel)    
+
+                        writer.writerow([label, str(voxelsCount), str(minIntensity), str(maxIntensity), str(meanIntensity), str(stdIntensity)])
+
 
         # Add new segmentation file to the segmentation's combobox
         if self.segmentationFilesComboBox.findText(segmentationFileName) == -1:
@@ -775,6 +851,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
             # Set the segmentation file UI name with this seeds file name and the used paramaters
             segmentationFileName = getSegmentationFileName(seedsFileName, distance, gamma, marginMask, regularizationDiameter)
             self.saveSegmentationName.text = segmentationFileName 
+            self.outputVolume = result
             
     def addMarkupcallback(self):
         """
@@ -888,7 +965,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         """
         Save this segmentation / labels image in a file named with the given parameters 
         Inputs:
-          * imgLabel : labels image to save 
+          * inputVolume : labels image to save 
         """
         segmentationFileName = self.globalPath + "Segmentations/" + segmentationFileName
         segmentationNode = slicer.mrmlScene.GetFirstNodeByClass('vtkMRMLSegmentationNode')
@@ -897,6 +974,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
 
         slicer.util.saveNode(labelmapVolumeNode, segmentationFileName)
         print("Segmentation saved : " + segmentationFileName)
+
     #endregion
 
     def cleanup(self):
@@ -1118,14 +1196,14 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
 
         # Check if regularization exists 
         regularizationFile = self.globalPath + "Regularizations/" + inputVolume.GetName() + "_" + str(regularizationDiameter) + ".nii.gz"
-        # If not, create a new one,
+        # If it exists, load this one
         if os.path.isfile(regularizationFile):
             print("--- Alredy existing regularization")
             regularizationVolumeNode = slicer.util.loadVolume(regularizationFile)
             voxels = slicer.util.arrayFromVolume(regularizationVolumeNode)
             R = np.copy(voxels)
             slicer.mrmlScene.RemoveNode(regularizationVolumeNode)
-        # Else, load this one
+        # Else, create a new one
         else :
             print("- Creating new regularization start : ")
             R = regularization(voxels, int(regularizationDiameter/2))
