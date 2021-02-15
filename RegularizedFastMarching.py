@@ -715,6 +715,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         inputVolume = self.inputSelector.currentNode()
         seedsFileName = self.fileNameSeedsLineEdit.text
         segmentationFileName = self.saveSegmentationName.text
+        csvFile = os.path.splitext(self.globalPath + "Segmentations/" + segmentationFileName)[0] + ".csv"
         
         if not inputVolume:
             logging.debug('no input volume node defined')
@@ -727,7 +728,8 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         if not self.saveByLabelsCheckBox.isChecked() and not self.saveByIntensitiesCheckBox.isChecked():
             logging.debug('At least one segmentation save mode must be checked')
             return
-
+            
+        start_time = time.time()
         if self.saveByLabelsCheckBox.isChecked():
             self.saveSegmentation(inputVolume, segmentationFileName)
         
@@ -736,35 +738,41 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
             backgroundLabel = len(self.seedsData)
             inputVoxels = slicer.util.arrayFromVolume(inputVolume)
             outputVoxels = slicer.util.arrayFromVolume(self.outputVolume)
+            inputVoxelsFlatten = inputVoxels.ravel()
+            outputVoxelsFlatten = outputVoxels.ravel()
+                     
+            shape = np.array([inputVoxels.shape[0], inputVoxels.shape[1], inputVoxels.shape[2], 2])
+            voxelsToSave = np.array( [[0, y] if y == 0 or y == backgroundLabel else [x, y] for x, y in zip(inputVoxelsFlatten, outputVoxelsFlatten)], dtype=np.int16 )
             
-            voxelsToSave = np.copy(inputVoxels)
-            voxelsShape = voxelsToSave.shape
-            voxelsToSave = np.array( [0 if y == 0 or y == backgroundLabel else x for x, y in zip(inputVoxels.ravel(), outputVoxels.ravel())], dtype=np.int16 )
-            voxelsToSave = voxelsToSave.reshape( voxelsShape )
-
             volumesLogic = slicer.modules.volumes.logic()
             toSaveNode = volumesLogic.CloneVolume(slicer.mrmlScene, inputVolume, self.outputVolume.GetName() + "_intensities")
-            slicer.util.updateVolumeFromArray(toSaveNode, voxelsToSave)
-            slicer.util.saveNode(toSaveNode, self.globalPath + "Segmentations/" + segmentationFileName)
+            # slicer.util.updateVolumeFromArray(toSaveNode, voxelsToSave)
+            slicer.util.updateVolumeFromArray(toSaveNode, voxelsToSave.reshape(shape)[:,:,:, 0])
+            slicer.util.saveNode(toSaveNode, self.globalPath + "Segmentations/intensities_" + segmentationFileName)
             self.outputVolumeWithIntensities = toSaveNode
 
             if self.generateDataCsvCheckBox.isChecked():
+                # Sort voxels by label
+                voxelsByLabels = [ [] for _ in range(len(self.seedsData)) ]
+                for v in voxelsToSave:
+                    if v[1] == len(self.seedsData):
+                        continue
+                    voxelsByLabels[v[1]].append(v[0])
 
-                csvFile =   os.path.splitext(self.globalPath + "Segmentations/" + segmentationFileName)[0] + ".csv"
                 with open(csvFile, 'w') as csvfile:
                     writer = csv.writer(csvfile, delimiter=',',
                         quotechar='|', quoting=csv.QUOTE_MINIMAL)
                     writer.writerow(["Label", "voxels count", "min", "max", "mean", "std"])
                     
                     # For each label
+                    i = 0 # Ensure non continuing labels
                     for seedData in self.seedsData:
                         label = int(seedData[0])
 
                         if label == len(self.seedsData):
                             continue
-                        
-                        voxelsByLabel = np.array( [ x for x, y in zip(inputVoxels.ravel(), outputVoxels.ravel()) if y == label ] )
-                    
+                        voxelsByLabel = voxelsByLabels[i]
+
                         voxelsCount = len(voxelsByLabel)
                         minIntensity = 0 if voxelsCount == 0 else np.amin(voxelsByLabel)
                         maxIntensity = 0 if voxelsCount == 0 else np.amax(voxelsByLabel)
@@ -772,6 +780,10 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
                         stdIntensity = 0 if voxelsCount == 0 else np.std(voxelsByLabel)    
 
                         writer.writerow([label, str(voxelsCount), str(minIntensity), str(maxIntensity), str(meanIntensity), str(stdIntensity)])
+                        i += 1
+
+        save_time = time.time() - start_time 
+        print("- Save time : %s seconds -" % save_time)
 
 
         # Add new segmentation file to the segmentation's combobox
