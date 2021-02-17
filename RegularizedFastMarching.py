@@ -505,7 +505,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         # Checkbox to generate segments data   
         #
         self.generateDataCsvCheckBox = qt.QCheckBox("")
-        self.generateDataCsvCheckBox.enabled = False
         self.generateDataCsvCheckBox.setChecked(False)
         parametersFormLayout.addRow("Generate segments data CSV", self.generateDataCsvCheckBox)
 
@@ -561,7 +560,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.clearButton.connect('clicked(bool)', self.onClearButton)
         self.clearOrganButton.connect('clicked(bool)', self.onClearOrganButton)
         self.segmentButton.connect('clicked(bool)', self.onSegmentButton)
-        self.saveByIntensitiesCheckBox.connect('stateChanged(int)', self.onSaveByIntensitiesCheckBox)
         self.saveSegmentationButton.connect('clicked(bool)', self.onSaveSegmentationButton)
         self.loadSegmentationButton.connect('clicked(bool)', self.onLoadSegmentationButton)
         self.saveMarkersButton.connect('clicked(bool)', self.onSaveMarkersButton)
@@ -705,11 +703,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
 
     def onSaveSegmentationFileChange(self):
         self.saveSegmentationButton.enabled = self.saveSegmentationName.text != ""
-            
-
-    def onSaveByIntensitiesCheckBox(self):
-        self.generateDataCsvCheckBox.enabled = self.saveByIntensitiesCheckBox.isChecked()
-        
+                
 
     def onSaveSegmentationButton(self):
         inputVolume = self.inputSelector.currentNode()
@@ -741,46 +735,35 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
             inputVoxelsFlatten = inputVoxels.ravel()
             outputVoxelsFlatten = outputVoxels.ravel()
                      
-            shape = np.array([inputVoxels.shape[0], inputVoxels.shape[1], inputVoxels.shape[2], 2])
-            voxelsToSave = np.array( [[0, y] if y == 0 or y == backgroundLabel else [x, y] for x, y in zip(inputVoxelsFlatten, outputVoxelsFlatten)], dtype=np.int16 )
+            shape = inputVoxels.shape
+            voxelsToSave = np.array( [0 if y == 0 or y == backgroundLabel else x for x, y in zip(inputVoxelsFlatten, outputVoxelsFlatten)], dtype=np.int16 )
             
             volumesLogic = slicer.modules.volumes.logic()
             toSaveNode = volumesLogic.CloneVolume(slicer.mrmlScene, inputVolume, self.outputVolume.GetName() + "_intensities")
             # slicer.util.updateVolumeFromArray(toSaveNode, voxelsToSave)
-            slicer.util.updateVolumeFromArray(toSaveNode, voxelsToSave.reshape(shape)[:,:,:, 0])
+            slicer.util.updateVolumeFromArray(toSaveNode, voxelsToSave.reshape(shape))
             slicer.util.saveNode(toSaveNode, self.globalPath + "Segmentations/intensities_" + segmentationFileName)
             self.outputVolumeWithIntensities = toSaveNode
 
-            if self.generateDataCsvCheckBox.isChecked():
-                # Sort voxels by label
-                voxelsByLabels = [ [] for _ in range(len(self.seedsData)) ]
-                for v in voxelsToSave:
-                    if v[1] == len(self.seedsData):
-                        continue
-                    voxelsByLabels[v[1]].append(v[0])
+        if self.generateDataCsvCheckBox.isChecked():
+            segmentationNode = slicer.mrmlScene.GetFirstNodeByClass('vtkMRMLSegmentationNode')
+            masterVolumeNode = inputVolume
+            resultsTableNode = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLTableNode')
 
-                with open(csvFile, 'w') as csvfile:
-                    writer = csv.writer(csvfile, delimiter=',',
-                        quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                    writer.writerow(["Label", "voxels count", "min", "max", "mean", "std"])
-                    
-                    # For each label
-                    i = 0 # Ensure non continuing labels
-                    for seedData in self.seedsData:
-                        label = int(seedData[0])
+            import SegmentStatistics
+            segStatLogic = SegmentStatistics.SegmentStatisticsLogic()
+            segStatLogic.getParameterNode().SetParameter("Segmentation", segmentationNode.GetID())
+            segStatLogic.getParameterNode().SetParameter("ScalarVolume", masterVolumeNode.GetID())
+            segStatLogic.getParameterNode().SetParameter("LabelmapSegmentStatisticsPlugin.enabled","False")
+            segStatLogic.getParameterNode().SetParameter("ClosedSurfaceSegmentStatisticsPlugin.enabled","False")
+            segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_mm3.enabled","False")
+            segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.volume_cm3.enabled","False")
+            segStatLogic.getParameterNode().SetParameter("ScalarVolumeSegmentStatisticsPlugin.median.enabled","False")
+            segStatLogic.computeStatistics()
+            segStatLogic.exportToTable(resultsTableNode)
+            segStatLogic.showTable(resultsTableNode)
 
-                        if label == len(self.seedsData):
-                            continue
-                        voxelsByLabel = voxelsByLabels[i]
-
-                        voxelsCount = len(voxelsByLabel)
-                        minIntensity = 0 if voxelsCount == 0 else np.amin(voxelsByLabel)
-                        maxIntensity = 0 if voxelsCount == 0 else np.amax(voxelsByLabel)
-                        meanIntensity = 0 if voxelsCount == 0 else np.mean(voxelsByLabel)
-                        stdIntensity = 0 if voxelsCount == 0 else np.std(voxelsByLabel)    
-
-                        writer.writerow([label, str(voxelsCount), str(minIntensity), str(maxIntensity), str(meanIntensity), str(stdIntensity)])
-                        i += 1
+            slicer.util.saveNode(resultsTableNode, csvFile)
 
         save_time = time.time() - start_time 
         print("- Save time : %s seconds -" % save_time)
