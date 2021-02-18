@@ -155,7 +155,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         # self.logic.previousVolumeName = None
         # self.logic.imgLabel = np.array([])
         # self.logic.previousImgIds = np.array([])
-        # self.logic.imgIds = np.array([])
         # self.logic.imgDist = np.array([])
 
         # Hide the Slicer Logo to increase space
@@ -815,9 +814,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         minThreshold = int(self.minThresholdSlider.value)
         maxThreshold = int(self.maxThresholdSlider.value)
         
-        # Tous les points convertis dans le repere RAS
         self.markupsList = []
-        
         if markupsNode != None:
             for i in range(markupsNode.GetNumberOfFiducials()):
                 point_ras = [0, 0, 0]
@@ -834,7 +831,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
             print("There is no fiducial markups !")
             return
         
-        # logic = RegularizedFastMarchingLogic()
         self.logic.setGlobalPath(self.globalPath)
         self.logic.setSeedsFileName(seedsFileName)
         self.logic.setRemoveLastSegmentation(self.removeLastSegmentationCheckBox.isChecked())
@@ -862,7 +858,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         """
         Set the background seed as the next seed to add and toggle the fiducial placement
         """
-        #print("Markup background markup index  : " + str(self.lastLabelIndex ))
         if self.currentSeedNameComboBox.currentIndex != self.currentSeedNameComboBox.count - 1:
             self.lastLabelIndex = self.currentSeedNameComboBox.currentIndex
         self.currentSeedNameComboBox.setCurrentIndex( self.currentSeedNameComboBox.count - 1 )
@@ -944,7 +939,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
             lines = fp.readlines()
           
             for line in lines: 
-            # for line in fp: 
                 if "#" in line: # comment line
                     continue
                 tokens = line.replace(" ", "").split(";")
@@ -955,7 +949,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         return markups
 
 
-    #def saveSegmentation(self, inputVolume, seedsFile, distance, gamma, marginMask, regularizationDiameter):
     def saveSegmentation(self, inputVolume, segmentationFileName):
         """
         Save this segmentation / labels image in a file named with the given parameters 
@@ -969,7 +962,6 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
 
         slicer.util.saveNode(labelmapVolumeNode, segmentationFileName)
         print("Segmentation saved : " + segmentationFileName)
-
     #endregion
 
     def cleanup(self):
@@ -1031,50 +1023,6 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
         """
         self.showBackGround = state
 
-    # def getSeedsByState(self, previousSeeds, newSeeds):
-    #     """
-    #     # Return the seeds in newSeeds that are not in previousSeeds
-    #     Return the added, modified, deleted seeds in differents arrays
-    #     """
-    #     seeds = [[], [], []] # added, modified, deleted
-
-    #     # Fill dicts by id
-    #     previousSeedsDict = {}
-    #     for seed in previousSeeds:
-    #         previousSeedsDict[seed["id"]] = seed
-
-    #     newSeedsDict = {}
-    #     for seed in newSeeds:
-    #         newSeedsDict[seed["id"]] = seed
-
-    #     # Find added and modified seeds
-    #     for key in newSeedsDict.keys():
-    #         if not key in previousSeedsDict: # added
-    #             seeds[0].append(newSeedsDict[key])
-    #         elif newSeedsDict[key] != previousSeedsDict[key] : # modified
-    #             seeds[1].append(newSeedsDict[key])
-        
-    #     # Find deleted seeds
-    #     for key in previousSeedsDict.keys():
-    #         if not key in newSeedsDict: # deleted
-    #             seeds[2].append(previousSeedsDict[key])
-
-    #     return seeds 
-
-    # def updatePreviousSegmentation(self, imgLabel, imgIds, imgDist, seeds, distance):
-    #     """
-    #         Set modified or removed points label, id and dist to 0, 0 and distance
-    #     """
-    #     for seed in seeds:
-    #         indexes = np.where(imgIds == seed.get("id"))
-            
-    #         for i in range(len(indexes[0])):
-    #             imgLabel[indexes[0][i]] [indexes[1][i]] [indexes[2][i]] = 0
-    #             imgIds[indexes[0][i]] [indexes[1][i]] [indexes[2][i]] = 0
-    #             imgDist[indexes[0][i]] [indexes[1][i]] [indexes[2][i]] = distance
-            
-    #     return imgLabel, imgIds, imgDist
-         
     def getSeedsFromMarkups(self, markupsList, nbLabel):
         """
         Return a formatted markups list from the given markups list.
@@ -1095,7 +1043,6 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
                 backGroundCount += 1
             seeds.append({"id": i, "label": label, "pos": markup[1]})
             i += 1
-        
         return seeds
    
     def getIJKSeeds(self, inputVolume, seeds) :
@@ -1125,20 +1072,6 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
             seeds[i]["pos"] = point_Ijk
         return seeds   
     
-    # def sortSeedsBackgroundFirst(self, seeds, nbLabel):
-    #     """
-    #     Return the seeds list with the background seeds at the beginning
-    #     Inputs:
-    #       * seeds : list of seeds unsorted
-    #     Outputs:
-    #       * seeds : list with the background seeds at the beginning
-    #     """
-    #     for i in range(len(seeds)):
-    #         if seeds[i]["pos"] >= nbLabel:
-    #             seeds.insert(0, seeds.pop(i))
-    #     return seeds
-
-
     def run(self, inputVolume, labelColorsList, markupsList, marginMask, distance, gamma, regularizationDiameter, threshold):
         """
         Run the segmentation algorithm with the given parameters and get the labels image
@@ -1149,61 +1082,28 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
             slicer.util.errorDisplay('Input volume is the same as output volume. Choose a different output volume.')
             return False
           
-        #Clone un node  
         volumesLogic = slicer.modules.volumes.logic()
         clonedVolumeNode = volumesLogic.CloneVolume(slicer.mrmlScene, inputVolume, "clone")
-      
-        # Ajoute une zone coloree autour de chaque marqueurs
         voxels = slicer.util.arrayFromVolume(clonedVolumeNode)
         tmpVoxels = np.copy(voxels)
         
         seeds = self.getSeedsFromMarkups(markupsList, len(labelColorsList))
         seeds = self.getIJKSeeds(inputVolume, seeds)  
-        #seeds = self.sortSeedsBackgroundFirst(seeds, len(labelColorsList))
-
-        # Si nouvelle segmentation avec meme volume
-        # les prochaines graines utilisees seront les nouvelles et les modifiees
-        # Retrait des graines modifiees et supprimees de imgLabel et imgDist 
-        # if self.previousVolumeName == inputVolume.GetName():
-        #     seedsStates = self.getSeedsByState(self.previousSeeds, seeds)
-        #     newSeeds = seedsStates[1] + seedsStates[2]
-        #     nextSeeds = seedsStates[0] + seedsStates[1]
-            
-        #     self.imgLabel, self.imgIds, self.imgDist = self.updatePreviousSegmentation(self.imgLabel, self.imgIds, self.imgDist, newSeeds, distance)
-
-        #     self.previousSeeds = seeds
-        #     seeds = nextSeeds
-
-        #     print("seeds states", seedsStates)
-        #     print("new seeds", newSeeds)
-
-        # else : # reset
-        #     self.imgLabel = np.array([])
-        #     self.imgIds = np.array([])
-        #     self.imgDist = np.array([])
-        #     self.previousSeeds = seeds
         
-        # self.previousVolumeName = inputVolume.GetName()
-
-        # Map de regularisation - dilatation de l'image
         start_time = time.time()
-        R = np.copy(tmpVoxels)
+        R = np.copy(tmpVoxels) # Regularization map
 
-        # Check if regularization exists 
         regularizationFile = self.globalPath + "Regularizations/" + inputVolume.GetName() + "_" + str(regularizationDiameter) + ".nii.gz"
-        # If it exists, load this one
-        if os.path.isfile(regularizationFile):
+        if os.path.isfile(regularizationFile): # If regularization exists, load this one
             print("--- Alredy existing regularization")
             regularizationVolumeNode = slicer.util.loadVolume(regularizationFile)
             voxels = slicer.util.arrayFromVolume(regularizationVolumeNode)
             R = np.copy(voxels)
             slicer.mrmlScene.RemoveNode(regularizationVolumeNode)
-        # Else, create a new one
-        else :
+        else : # Else, create a new one
             print("- Creating new regularization start : ")
             R = regularization(voxels, int(regularizationDiameter/2))
             print("- Creating new regularization end")
-
             regularizationVolumeNode = volumesLogic.CloneVolume(slicer.mrmlScene, inputVolume, inputVolume.GetName() + "_regularization_" + str(regularizationDiameter))
             slicer.util.updateVolumeFromArray(regularizationVolumeNode, R)
             slicer.util.saveNode(regularizationVolumeNode, regularizationFile)
@@ -1211,22 +1111,16 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
         regularization_time = time.time() - start_time
         print("- Regularization time : %s seconds -" % regularization_time)
 
-
         # def segmentation(globalPath, volume, voxels, seeds, marginMask, distance, regDiameter):
-        self.imgLabel, self.imgIds, self.imgDist = segmentation(inputVolume, tmpVoxels, R, seeds, 
+        self.imgLabel, self.imgDist = segmentation(inputVolume, tmpVoxels, R, seeds, 
             len(labelColorsList), marginMask, distance, gamma, regularizationDiameter, threshold)    
        
         tmpVoxels[:] = self.imgLabel[:]
-        
         slicer.util.updateVolumeFromArray(clonedVolumeNode, tmpVoxels)
-
-        #Copie le resultat dans le node d'arrive
         outputVolume = slicer.vtkSlicerVolumesLogic().CloneVolume(slicer.mrmlScene, clonedVolumeNode, inputVolume.GetName() + "_segmentation", True)
         
-        # Affiche les segments en couleur de chaque graine
         displaySegmentationMap(clonedVolumeNode, self.imgLabel, labelColorsList, self.removeLastSegmentation, self.showBackGround)
         
-        # Supprime la copie
         if slicer.mrmlScene:
             slicer.mrmlScene.RemoveNode(clonedVolumeNode)        
       
@@ -1280,17 +1174,6 @@ def displaySegmentationMap(inputVolume, segmentationMap, labelColorsList, remove
             displayNode.SetSegmentVisibility (addedSegmentID, False)
 
         effect.self().onApply()
-        # segmentEditorWidget.setActiveEffectByName("Smoothing")
-        # effect = segmentEditorWidget.activeEffect()
-        # effect.setParameter("SmoothingMethod", "MEDIAN")
-        # effect.setParameter("KernelSizeMm", 11)
-        # effect.self().onApply()
-    
-        # Clean up
-        # segmentEditorWidget = None
-        # slicer.mrmlScene.RemoveNode(segmentEditorNode)
-        
-        # surfaceMesh = None
-        # segmentationNode.GetClosedSurfaceRepresentation(addedSegmentID, surfaceMesh)
+       
     # print 3D representation
     segmentationNode.CreateClosedSurfaceRepresentation()
