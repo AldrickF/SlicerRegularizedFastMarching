@@ -74,6 +74,14 @@ Table of segmentation detail (min, max, mean and SD values) on each segmentation
 <img src="Resources/Icons/SlicerRFM_README_Fig4.png" alt="SlicerRFM_README_Fig4" width="500"/>
 
 
+## Contributors
+
+Aldrick FAURE<sup>1,2</sup>; Laurent RISSER<sup>2,3</sup>; Sol&eacute;akh&eacute;na KEN<sup>1</sup>
+<sup>1</sup>Institut Universitaire du Cancer de Toulouse Oncopole – Institut Claudius Regaud, Département de Physique Médicale, Toulouse, FRANCE 
+<sup>2</sup>Institut de Mathématiques de Toulouse, CNRS, Toulouse, FRANCE
+<sup>3</sup>Artificial and Natural Intelligence Toulouse Institute (3IA ANITI), Toulouse, FRANCE
+
+
 ## Acknowledgment
 
 The authors would like to thank Sandra Lebreton for her first implementation of the rFM segmentation algorithm in C++.
