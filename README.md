@@ -76,10 +76,10 @@ Table of segmentation detail (min, max, mean and SD values) on each segmentation
 
 ## Contributors
 
-Aldrick FAURE<sup>1,2</sup>; Laurent RISSER<sup>2,3</sup>; Sol&eacute;akh&eacute;na KEN<sup>1</sup>
-<sup>1</sup>Institut Universitaire du Cancer de Toulouse Oncopole – Institut Claudius Regaud, Département de Physique Médicale, Toulouse, FRANCE 
-<sup>2</sup>Institut de Mathématiques de Toulouse, CNRS, Toulouse, FRANCE
-<sup>3</sup>Artificial and Natural Intelligence Toulouse Institute (3IA ANITI), Toulouse, FRANCE
+Aldrick FAURE<sup>1,2</sup>; Laurent RISSER<sup>2,3</sup>; Sol&eacute;akh&eacute;na KEN<sup>1</sup><br>
+<sup>1</sup>Institut Universitaire du Cancer de Toulouse Oncopole – Institut Claudius Regaud, Département de Physique Médicale, Toulouse, FRANCE <br>
+<sup>2</sup>Institut de Mathématiques de Toulouse, CNRS, Toulouse, FRANCE<br>
+<sup>3</sup>Artificial and Natural Intelligence Toulouse Institute (3IA ANITI), Toulouse, FRANCE<br>
 
 
 ## Acknowledgment
