@@ -1,13 +1,26 @@
 #-----------------------------------------------------------------------------
-set(MODULE_NAME SegmentationFastMarching)
+set(MODULE_NAME RegularizedFastMarching)
 
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
   ${MODULE_NAME}.py
+  RegularizedFastMarchingLib/__init__.py
+  RegularizedFastMarchingLib/Segmentation.py
+  RegularizedFastMarchingLib/Regularization.py
   )
 
 set(MODULE_PYTHON_RESOURCES
   Resources/Icons/${MODULE_NAME}.png
+  Resources/UI/${MODULE_NAME}.ui
+  Resources/SegmentationFastMarching/Regularizations/.gitkeep
+  Resources/SegmentationFastMarching/Seeds/.gitkeep
+  Resources/SegmentationFastMarching/Seeds/three.seed
+  Resources/SegmentationFastMarching/SeedsLabels/.gitkeep
+  Resources/SegmentationFastMarching/SeedsLabels/SeedsNamesLabels_binary.csv
+  Resources/SegmentationFastMarching/SeedsLabels/SeedsNamesLabels_brain.csv
+  Resources/SegmentationFastMarching/SeedsLabels/SeedsNamesLabels_ganglions.csv
+  Resources/SegmentationFastMarching/Segmentations/.gitkeep
+  Resources/SegmentationFastMarching/Volumes/.gitkeep
   )
 
 #-----------------------------------------------------------------------------
