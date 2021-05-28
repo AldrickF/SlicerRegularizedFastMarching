@@ -1,31 +1,27 @@
-#-----------------------------------------------------------------------------
-set(MODULE_NAME RegularizedFastMarching)
+cmake_minimum_required(VERSION 3.13.4)
+
+project(RegularizedFastMarching)
 
 #-----------------------------------------------------------------------------
-set(MODULE_PYTHON_SCRIPTS
-  ${MODULE_NAME}.py
-  )
-
-set(MODULE_PYTHON_RESOURCES
-  Resources/Icons/${MODULE_NAME}.png
-  Resources/UI/${MODULE_NAME}.ui
-  )
-
-#-----------------------------------------------------------------------------
-slicerMacroBuildScriptedModule(
-  NAME ${MODULE_NAME}
-  SCRIPTS ${MODULE_PYTHON_SCRIPTS}
-  RESOURCES ${MODULE_PYTHON_RESOURCES}
-  WITH_GENERIC_TESTS
-  )
+# Extension meta-information
+set(EXTENSION_HOMEPAGE "https://www.slicer.org/wiki/Documentation/Nightly/Extensions/RegularizedFastMarching")
+set(EXTENSION_CATEGORY "Segmentation")
+set(EXTENSION_CONTRIBUTORS "Aldrick FAURE (IMT)")
+set(EXTENSION_DESCRIPTION "This module performs a regularized fast marching segmentation on volumes. Seeds can be set manually or from file. Seeds label can be set from csv file.")
+set(EXTENSION_ICONURL "https://github.com/AldrickF/SlicerRegularizedFastMarching/raw/main/Resources/Icons/RegularizedFastMarching.png")
+set(EXTENSION_SCREENSHOTURLS "https://github.com/AldrickF/SlicerRegularizedFastMarching/raw/main/Resources/Icons/SlicerRFM_README_Fig3.png https://github.com/AldrickF/SlicerRegularizedFastMarching/raw/main/Resources/Icons/SlicerRFM_README_Fig2.png https://github.com/AldrickF/SlicerRegularizedFastMarching/raw/main/Resources/Icons/SlicerRFM_README_Fig4.png")
+set(EXTENSION_DEPENDS "NA") # Specified as a list or "NA" if no dependencies
 
 #-----------------------------------------------------------------------------
-if(BUILD_TESTING)
+# Extension dependencies
+find_package(Slicer REQUIRED)
+include(${Slicer_USE_FILE})
 
-  # Register the unittest subclass in the main script as a ctest.
-  # Note that the test will also be available at runtime.
-  slicer_add_python_unittest(SCRIPT ${MODULE_NAME}.py)
+#-----------------------------------------------------------------------------
+# Extension modules
+add_subdirectory(RegularizedFastMarching)
+## NEXT_MODULE
 
-  # Additional build-time testing
-  add_subdirectory(Testing)
-endif()
+#-----------------------------------------------------------------------------
+include(${Slicer_EXTENSION_GENERATE_CONFIG})
+include(${Slicer_EXTENSION_CPACK})
