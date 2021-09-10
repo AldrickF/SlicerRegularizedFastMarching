@@ -4,3 +4,4 @@
 *.nii.gz
 *.npy
 *.seg.nrrd
+*.csv

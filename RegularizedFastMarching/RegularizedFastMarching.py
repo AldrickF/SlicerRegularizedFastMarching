@@ -5,8 +5,8 @@ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 
-from Resources.Segmentation import *
-from Resources.Regularization import *
+from RegularizedFastMarchingLib.Segmentation import *
+from RegularizedFastMarchingLib.Regularization import *
 
 import numpy as np
 import os.path
@@ -23,21 +23,18 @@ class RegularizedFastMarching(ScriptedLoadableModule):
 
     def __init__(self, parent):
         ScriptedLoadableModule.__init__(self, parent)
-        self.parent.title = "Regularized Fast Marching"  # TODO: make this more human readable by adding spaces
-        self.parent.categories = ["Segmentation"]  # TODO: set categories (folders where the module shows up in the module selector)
-        self.parent.dependencies = []  # TODO: add here list of module names that this module requires
-        self.parent.contributors = ["Aldrick FAURE (IMT)"]  # TODO: replace with "Firstname Lastname (Organization)"
-        # TODO: update with short description of the module and a link to online module documentation
+        self.parent.title = "Regularized Fast Marching"
+        self.parent.categories = ["Segmentation"]
+        self.parent.dependencies = []
+        self.parent.contributors = ["Aldrick FAURE (IMT)"]
         self.parent.helpText = """
-    This module performs a regularized fast marching on volumes.
-    Seeds can be set manually or from file 
-    Seeds label can be set from csv file 
-    """
+This module performs a regularized fast marching on volumes. Seeds can be set manually or from file. Seeds label can be set from csv file.
+More information is available in the <a href="https://github.com/AldrickF/SlicerRegularizedFastMarching">module documentation</a>.
+"""
         # TODO: replace with organization, grant and thanks
         self.parent.acknowledgementText = """
-    This file was originally developed by Jean-Christophe Fillion-Robin, Kitware Inc., Andras Lasso, PerkLab,
-    and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR013218-12S1.
-    """
+The authors would like to thank Sandra Lebreton for her first implementation of the regularized fast marching segmentation algorithm in C++.
+"""
 
         # Additional initialization step after application startup is complete
         slicer.app.connect("startupCompleted()", registerSampleData)
@@ -122,11 +119,11 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         """
         Fill this combobox with the path's files ending with this extension
         Inputs:
-            * combobox : the combobox to fill
-            * path : folder path containing the files with correct extension
-            * extension : the desired file's extension
+            * combobox: the combobox to fill
+            * path: folder path containing the files with correct extension
+            * extension: the desired file's extension
         Outputs:
-            * combobox : the combobox filled 
+            * combobox: the combobox filled 
         """
         files = []
         for file in os.listdir(path):
@@ -185,7 +182,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         # 
         # self.volueNameComboBox = qt.QComboBox()     
         # self.volueNameComboBox = self.fillComboBox(self.volueNameComboBox, self.volumesPath, ".nii")
-        # parametersFormLayout.addRow("Volumes .nii : ", self.volueNameComboBox)
+        # parametersFormLayout.addRow("Volumes .nii: ", self.volueNameComboBox)
     
         #
         # Load volume buttons
@@ -214,7 +211,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         # Seeds files and a text line to load / save seeds from the scene
         #
         horizontalLayout = qt.QHBoxLayout()
-        fileNameSeedsLabel = qt.QLabel("Seeds : ")
+        fileNameSeedsLabel = qt.QLabel("Seeds: ")
         self.fileNameSeedsComboBox = qt.QComboBox() 
         self.fileNameSeedsComboBox = self.fillComboBox(self.fileNameSeedsComboBox, self.seedsPath, ".seed")   
         self.fileNameSeedsLineEdit = qt.QLineEdit()
@@ -285,7 +282,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
             markupsNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
             markupsNode.CreateDefaultDisplayNodes()
             
-        # On markuk added event : format the added markup
+        # On markup added event: format the added markup
         markupsNode.AddObserver(slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent, onMarkupAdded)
         self.w.setCurrentNode(markupsNode)
         # Hide all buttons and only show place button
@@ -317,7 +314,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         horizontalLayout = qt.QHBoxLayout()
         # Seeds label 
         self.seedsLabelText = qt.QLabel()
-        self.seedsLabelText.text = "Labels :"
+        self.seedsLabelText.text = "Labels:"
         horizontalLayout.addWidget(self.seedsLabelText)
         
         # ComboxBox containing names and labels
@@ -357,7 +354,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.inputSelector.showChildNodeTypes = False
         self.inputSelector.setMRMLScene( slicer.mrmlScene )
         self.inputSelector.setToolTip( "Pick the input to the algorithm." )
-        parametersFormLayout.addRow("Input Volume : ", self.inputSelector)
+        parametersFormLayout.addRow("Input Volume: ", self.inputSelector)
 
         #
         # Add vertical spacing
@@ -513,7 +510,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         #
         self.saveSegmentationName = qt.QLineEdit()
         self.saveSegmentationName.textChanged.connect(self.onSaveSegmentationFileChange)
-        parametersFormLayout.addRow("Segmentation name :", self.saveSegmentationName) 
+        parametersFormLayout.addRow("Segmentation name:", self.saveSegmentationName) 
 
         #
         # Save segmentationButton Button
@@ -530,7 +527,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
 
         horizontalLayout = qt.QHBoxLayout()
         self.segmentationLoadLabelText = qt.QLabel()
-        self.segmentationLoadLabelText.text = "Segmentation files :"
+        self.segmentationLoadLabelText.text = "Segmentation files:"
         horizontalLayout.addWidget(self.segmentationLoadLabelText)
         
         #
@@ -565,7 +562,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.loadMarkersButton.connect('clicked(bool)', self.onLoadMarkersButton)
         self.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
     
-        # Keyboard shortcut bind : press ctrl button to add markup        
+        # Keyboard shortcut bind: press ctrl button to add markup        
         markupShortcut = qt.QShortcut(slicer.util.mainWindow())
         markupShortcut.setKey( qt.QKeySequence("w") )
         markupShortcut.connect('activated()', self.addMarkupcallback)
@@ -604,7 +601,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         self.maxThresholdSlider.minimum = minIntensity
         self.minThresholdSlider.minimum = minIntensity
 
-    # def onLoadBrainVolumeButton(self) : 
+    # def onLoadBrainVolumeButton(self): 
     #     """
     #     Load the brain volume from SampleData's module
     #     """
@@ -644,9 +641,9 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         i = 0
         while i < markupsNode.GetNumberOfFiducials():
           name = markupsNode.GetNthFiducialLabel(i)
-          if name == organName :
+          if name == organName:
               markupsNode.RemoveMarkup(i)
-          else :
+          else:
               i += 1
 
 
@@ -697,7 +694,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
             markupsNode.SetNthMarkupLocked (i, False)
 
         loadTime = time.time() - start_time
-        logging.info('Markers loaded from ' + fileName + ' : ' + str(loadTime) + " seconds")
+        logging.info('Markers loaded from ' + fileName + ': ' + str(loadTime) + " seconds")
     
 
     def onSaveSegmentationFileChange(self):
@@ -765,7 +762,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
             slicer.util.saveNode(resultsTableNode, csvFile)
 
         save_time = time.time() - start_time 
-        print("- Save time : %s seconds -" % save_time)
+        print("- Save time: %s seconds -" % save_time)
 
 
         # Add new segmentation file to the segmentation's combobox
@@ -838,7 +835,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         result = self.logic.run(self.inputSelector.currentNode(), self.labelColorsList, self.markupsList,
             marginMask, distance, gamma, regularizationDiameter, [minThreshold, maxThreshold])
 
-        if result : # Run succeed
+        if result: # Run succeed
             # Set the segmentation file UI name with this seeds file name and the used paramaters
             segmentationFileName = getSegmentationFileName(seedsFileName, distance, gamma, marginMask, regularizationDiameter)
             self.saveSegmentationName.text = segmentationFileName 
@@ -889,7 +886,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         """
         Setter connect on combobox to select the seeds file name
         Inputs:
-          * seedFile : selected seeds file name
+          * seedFile: selected seeds file name
         """
         self.fileNameSeedsLineEdit.text = seedFile
     
@@ -898,14 +895,14 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         """
         Load the labels from file in combobox, connect on combobox
         Inputs:
-          * labelFile : selected seeds file name
+          * labelFile: selected seeds file name
         """
         self.seedsData = self.loadCSVSeeds(self.seedsCsvPath + labelFile)
         self.labelColorsList = [[s[1], s[2]] for s in self.seedsData]
         
         self.currentSeedNameComboBox.clear() 
         for seed in self.seedsData: 
-            self.currentSeedNameComboBox.addItem(str(seed[0]) + " : " + str(seed[1]))
+            self.currentSeedNameComboBox.addItem(str(seed[0]) + ": " + str(seed[1]))
         self.lastLabelIndex = self.currentSeedNameComboBox.currentIndex
 
 
@@ -913,16 +910,16 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         """
         Load and return the labels file from the given path in a list
         Inputs:
-          * csvFilePath : the labels file
+          * csvFilePath: the labels file
         Ouputs:
-          * labels : the labels list containing the index, name and color of each label
+          * labels: the labels list containing the index, name and color of each label
         """
         labels = []
         with open(csvFilePath) as csvfile:
             reader = csv.reader(csvfile, delimiter=',', quotechar='|')
             for row in reader:
                 labels.append([row[0], row[1], [float(row[2]), float(row[3]), float(row[4]) ]])
-        print(csvFilePath + " : labels loaded")
+        print(csvFilePath + ": labels loaded")
         return labels
     
 
@@ -930,9 +927,9 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         """
         Load and return the markups file from the given path in a list
         Inputs:
-          * seedFile : the seedFile to load
+          * seedFile: the seedFile to load
         Ouputs:
-          * markups : the markups list containing the name, label and coordinate in RAS (Right, Anterior, Superior) coordinates of each label
+          * markups: the markups list containing the name, label and coordinate in RAS (Right, Anterior, Superior) coordinates of each label
         """
         markups = []
         with open(seedFile, "r") as fp:
@@ -953,7 +950,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         """
         Save this segmentation / labels image in a file named with the given parameters 
         Inputs:
-          * inputVolume : labels image to save 
+          * inputVolume: labels image to save 
         """
         segmentationFileName = self.globalPath + "Segmentations/" + segmentationFileName
         segmentationNode = slicer.mrmlScene.GetFirstNodeByClass('vtkMRMLSegmentationNode')
@@ -961,7 +958,7 @@ class RegularizedFastMarchingWidget(ScriptedLoadableModuleWidget, VTKObservation
         slicer.modules.segmentations.logic().ExportVisibleSegmentsToLabelmapNode(segmentationNode, labelmapVolumeNode, inputVolume)
 
         slicer.util.saveNode(labelmapVolumeNode, segmentationFileName)
-        print("Segmentation saved : " + segmentationFileName)
+        print("Segmentation saved: " + segmentationFileName)
     #endregion
 
     def cleanup(self):
@@ -1028,10 +1025,10 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
         Return a formatted markups list from the given markups list.
         The background seeds have unique label because there using a unique mask 
         Inputs:
-          * markupsList : the raw markups list
-          * nbLabel : the number of label to know which seed is a background seed
+          * markupsList: the raw markups list
+          * nbLabel: the number of label to know which seed is a background seed
         Ouputs: 
-          * seeds : the formatted markups list
+          * seeds: the formatted markups list
         """
         seeds = []
         i = 1
@@ -1045,14 +1042,14 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
             i += 1
         return seeds
    
-    def getIJKSeeds(self, inputVolume, seeds) :
+    def getIJKSeeds(self, inputVolume, seeds):
         """
         Return the given seeds list where each seed is transform from RAS (Right, Anterior, Superior) coordinates to IJK (image) coordinates
         Inputs:
-          * inputVolume : volume transform reference 
-          * seeds : list containing all the seeds in RAS coordinates
+          * inputVolume: volume transform reference 
+          * seeds: list containing all the seeds in RAS coordinates
         Outputs:
-            seeds : list containing all the seeds in IJK coordinates
+            seeds: list containing all the seeds in IJK coordinates
         """
         for i in range(len(seeds)): # pour chaque point 
             point_ras = seeds[i].get("pos")
@@ -1100,8 +1097,8 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
             voxels = slicer.util.arrayFromVolume(regularizationVolumeNode)
             R = np.copy(voxels)
             slicer.mrmlScene.RemoveNode(regularizationVolumeNode)
-        else : # Else, create a new one
-            print("- Creating new regularization start : ")
+        else: # Else, create a new one
+            print("- Creating new regularization start: ")
             R = regularization(voxels, int(regularizationDiameter/2))
             print("- Creating new regularization end")
             regularizationVolumeNode = volumesLogic.CloneVolume(slicer.mrmlScene, inputVolume, inputVolume.GetName() + "_regularization_" + str(regularizationDiameter))
@@ -1109,7 +1106,7 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
             slicer.util.saveNode(regularizationVolumeNode, regularizationFile)
 
         regularization_time = time.time() - start_time
-        print("- Regularization time : %s seconds -" % regularization_time)
+        print("- Regularization time: %s seconds -" % regularization_time)
 
         # def segmentation(globalPath, volume, voxels, seeds, marginMask, distance, regDiameter):
         self.imgLabel, self.imgDist = segmentation(inputVolume, tmpVoxels, R, seeds, 
@@ -1131,8 +1128,6 @@ class RegularizedFastMarchingLogic(ScriptedLoadableModuleLogic):
 def displaySegmentationMap(inputVolume, segmentationMap, labelColorsList, removeLastSegmentation, showBackGround):
     """
     Create a segmentation like using the segment editor's tool, create a segment for each different label in the segmentation image
-    Inputs: 
-      *  :
     """    
     # Remove last segmentation, including 3D representation
     if removeLastSegmentation:
@@ -1141,15 +1136,11 @@ def displaySegmentationMap(inputVolume, segmentationMap, labelColorsList, remove
             slicer.mrmlScene.RemoveNode( slicer.mrmlScene.GetNthNodeByClass(countSegmentationNode-1, "vtkMRMLSegmentationNode") )
     
     segmentationNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
-    segmentationNode.CreateDefaultDisplayNodes() # only needed for display
+    segmentationNode.CreateDefaultDisplayNodes()
     segmentationNode.SetReferenceImageGeometryParameterFromVolumeNode(inputVolume)
     
     segmentationNode.RemoveClosedSurfaceRepresentation()
-    
-    displayNode = slicer.vtkMRMLSegmentationDisplayNode()
-    slicer.mrmlScene.AddNode(displayNode)
-    segmentationNode.SetAndObserveDisplayNodeID(displayNode.GetID())
-     
+
     # Create segment editor to get access to effects
     segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
     segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
@@ -1161,7 +1152,7 @@ def displaySegmentationMap(inputVolume, segmentationMap, labelColorsList, remove
     for i in range(len(labelColorsList)):
         addedSegmentID = segmentationNode.GetSegmentation().AddEmptySegment(labelColorsList[i][0])
         segmentationNode.GetSegmentation().GetSegment(addedSegmentID).SetColor(labelColorsList[i][1])
-        segmentEditorWidget.setCurrentSegmentID(addedSegmentID);
+        segmentEditorWidget.setCurrentSegmentID(addedSegmentID)
     
         # Thresholding
         segmentEditorWidget.setActiveEffectByName("Threshold")
@@ -1169,11 +1160,10 @@ def displaySegmentationMap(inputVolume, segmentationMap, labelColorsList, remove
         thresh = i+1
         effect.setParameter("MinimumThreshold", str(clip(thresh, 0, 255)))
         effect.setParameter("MaximumThreshold", str(clip(thresh, 0, 255)))
-
-        if not showBackGround and i+1 == len(labelColorsList):
-            displayNode.SetSegmentVisibility (addedSegmentID, False)
-
         effect.self().onApply()
-       
+
+        if (not showBackGround) and (i == len(labelColorsList) - 1):
+            segmentationNode.GetDisplayNode().SetSegmentVisibility (addedSegmentID, False)
+
     # print 3D representation
     segmentationNode.CreateClosedSurfaceRepresentation()
