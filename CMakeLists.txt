@@ -8,8 +8,8 @@ set(EXTENSION_HOMEPAGE "https://www.slicer.org/wiki/Documentation/Nightly/Extens
 set(EXTENSION_CATEGORY "Segmentation")
 set(EXTENSION_CONTRIBUTORS "Aldrick FAURE (IMT)")
 set(EXTENSION_DESCRIPTION "This module performs a regularized fast marching segmentation on volumes. Seeds can be set manually or from file. Seeds label can be set from csv file.")
-set(EXTENSION_ICONURL "https://github.com/AldrickF/SlicerRegularizedFastMarching/raw/main/Resources/Icons/RegularizedFastMarching.png")
-set(EXTENSION_SCREENSHOTURLS "https://github.com/AldrickF/SlicerRegularizedFastMarching/raw/main/Resources/Icons/SlicerRFM_README_Fig3.png https://github.com/AldrickF/SlicerRegularizedFastMarching/raw/main/Resources/Icons/SlicerRFM_README_Fig2.png https://github.com/AldrickF/SlicerRegularizedFastMarching/raw/main/Resources/Icons/SlicerRFM_README_Fig4.png")
+set(EXTENSION_ICONURL "https://raw.githubusercontent.com/AldrickF/SlicerRegularizedFastMarching/main/RegularizedFastMarching/Resources/Icons/RegularizedFastMarching.png")
+set(EXTENSION_SCREENSHOTURLS "https://raw.githubusercontent.com/AldrickF/SlicerRegularizedFastMarching/main/Docs/SlicerRFM_README_Fig3.png https://raw.githubusercontent.com/AldrickF/SlicerRegularizedFastMarching/main/Docs/SlicerRFM_README_Fig2.png https://raw.githubusercontent.com/AldrickF/SlicerRegularizedFastMarching/main/Docs/SlicerRFM_README_Fig4.png")
 set(EXTENSION_DEPENDS "NA") # Specified as a list or "NA" if no dependencies
 
 #-----------------------------------------------------------------------------
